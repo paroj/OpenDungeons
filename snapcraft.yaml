@@ -1,5 +1,5 @@
 name: opendungeons
-version: 0.8.0
+version: 0.8.0+new-editor
 confinement: strict
 summary: OpenDungeons
 base: core18
@@ -83,8 +83,8 @@ parts:
         after: [ogre]
     opendungeons:
         plugin: cmake
-        source: https://github.com/paroj/OpenDungeons.git
-        source-tag: snapcraft
+        source: https://github.com/tomluchowski/OpenDungeons.git
+        source-tag: new-editor
         source-depth: 1
         override-pull: |
             snapcraftctl pull
@@ -92,7 +92,7 @@ parts:
         configflags:
             - -DCMAKE_BUILD_TYPE=Release
             - -DCMAKE_INSTALL_PREFIX=/usr/
-            - -DCMAKE_CXX_FLAGS=-std=c++11
+            - -DOD_TREAT_WARNINGS_AS_ERRORS=OFF
         override-build: |
             snapcraftctl build
             sed -i -e 's|/.*/stage||g' $SNAPCRAFT_PART_INSTALL/etc/opendungeons/plugins.cfg # drop stage prefix
