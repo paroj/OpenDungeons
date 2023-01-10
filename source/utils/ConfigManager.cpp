@@ -1608,8 +1608,9 @@ bool ConfigManager::initVideoConfig(Ogre::Root& ogreRoot)
 {
     // Also creates the config entry if it doesn't exist in config yet.
     std::string rendererName = getVideoValue(Config::RENDERER, std::string(), false);
+    bool firstRun = rendererName.empty();
     // Try the default OpenGL renderer first, if empty.
-    if (rendererName.empty())
+    if (firstRun)
         rendererName = "OpenGL Rendering Subsystem";
 
     Ogre::RenderSystem* renderSystem = ogreRoot.getRenderSystemByName(rendererName);
@@ -1685,6 +1686,9 @@ bool ConfigManager::initVideoConfig(Ogre::Root& ogreRoot)
         for (const std::string& option : optionsToRemove)
             mVideoUserConfig.erase(option);
     }
+
+    if(firstRun)
+        renderSystem->setConfigOption("Video Mode", "1024 x 768");
 
     return true;
 }
