@@ -172,6 +172,8 @@ bool ODFrameListener::frameRenderingQueued(const Ogre::FrameEvent& evt)
     if (mWindow->isClosed())
         return false;
 
+    Ogre::WindowEventUtilities::messagePump();
+
     // Sleep to limit the framerate to the max value
     mFpsLimiter.sleepIfEarly();
 

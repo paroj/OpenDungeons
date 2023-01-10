@@ -186,6 +186,7 @@ void ODApplication::startClient()
     renderWindow->setVisible(true);
 #else /* OD_USE_SFML_WINDOW */
     Ogre::RenderWindow* renderWindow = ogreRoot.initialise(true, "OpenDungeons " + VERSION);
+    Ogre::WindowEventUtilities::_addRenderWindow(renderWindow);
 #endif /* OD_USE_SFML_WINDOW */
 
 

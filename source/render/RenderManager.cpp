@@ -86,7 +86,7 @@ RenderManager::RenderManager(Ogre::OverlaySystem* overlaySystem) :
     mHandKeeperNode(nullptr),
     mHandLight(nullptr),
     mHandLightNode(nullptr),
-    mCurrentFOVy(0.0f),
+    mCurrentAspectRatio(0.0f),
     mFactorWidth(0.0f),
     mFactorHeight(0.0f),
     mCreatureTextOverlayDisplayed(false),
@@ -1528,9 +1528,9 @@ std::string RenderManager::setMaterialOpacity(const std::string& materialName, f
 void RenderManager::moveCursor(float relX, float relY)
 {
     Ogre::Camera* cam = mViewport->getCamera();
-    if(cam->getFOVy() != mCurrentFOVy)
+    if(cam->getAspectRatio() != mCurrentAspectRatio)
     {
-        mCurrentFOVy = cam->getFOVy();
+        mCurrentAspectRatio = cam->getAspectRatio();
         Ogre::Radian angle = cam->getFOVy() * 0.5f;
         Ogre::Real tan = Ogre::Math::Tan(angle);
         Ogre::Real shortestSize = KEEPER_HAND_POS_Z * tan * 2.0f;

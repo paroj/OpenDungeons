@@ -129,6 +129,7 @@ void CameraManager::createCamera(const Ogre::String& ss, double nearClip, double
     Ogre::Camera* tmpCamera = mSceneManager->createCamera(ss);
     tmpCamera->setNearClipDistance(static_cast<Ogre::Real>(nearClip));
     tmpCamera->setFarClipDistance(static_cast<Ogre::Real>(farClip));
+    tmpCamera->setAutoAspectRatio(true);
 
     mRegisteredCameraNames.insert(ss);
     OD_LOG_INF("Creating " + ss + " camera...");
