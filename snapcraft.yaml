@@ -1,5 +1,5 @@
 name: opendungeons
-version: "0.8.0+ogre13"
+version: "0.7.2+ogre13"
 confinement: strict
 summary: OpenDungeons
 base: core20
