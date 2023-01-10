@@ -26,6 +26,8 @@
 #include "camera/CullingManager.h"
 #include "utils/LogManager.h"
 #include "gamemap/GameMap.h"
+#include "render/RenderManager.h"
+#include "render/ODFrameListener.h"
 
 #include <OgreCamera.h>
 #include <OgreMaterialManager.h>
@@ -460,6 +462,12 @@ void CameraManager::updateCameraFrameTime(const Ogre::Real frameTime)
 
     // Move the camera to the new location
     getActiveCameraNode()->setPosition(newPosition);
+
+    Ogre::Vector3 keepHandPos, keeperHandGroundPos;
+    if(!ODFrameListener::getSingleton().findWorldPositionFromMouse(keepHandPos, keeperHandGroundPos))
+        return;
+
+    RenderManager::getSingleton().moveWorldCoords(keepHandPos.x, keepHandPos.y);
 }
 
 Ogre::Vector3 CameraManager::getCameraViewTarget() const

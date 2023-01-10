@@ -223,7 +223,7 @@ bool EditorMode::mouseMoved(const OIS::MouseEvent &arg)
     // and look for the first object which is actually a tile.
     Ogre::Vector3 keeperHandPos;
     Ogre::Vector3 keeperHandGround;
-    if(!ODFrameListener::getSingleton().findWorldPositionFromMouse(arg, keeperHandPos, keeperHandGround))
+    if(!ODFrameListener::getSingleton().findWorldPositionFromMouse(keeperHandPos, keeperHandGround))
         return true;
 
     RenderManager::getSingleton().moveWorldCoords(keeperHandPos.x, keeperHandPos.y);
@@ -355,7 +355,7 @@ bool EditorMode::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButtonID id)
 
     Ogre::Vector3 keeperHandPos;
     Ogre::Vector3 keeperGroundPos;
-    if(!ODFrameListener::getSingleton().findWorldPositionFromMouse(arg, keeperHandPos, keeperGroundPos))
+    if(!ODFrameListener::getSingleton().findWorldPositionFromMouse(keeperHandPos, keeperGroundPos))
         return true;
 
     RenderManager::getSingleton().moveWorldCoords(keeperHandPos.x, keeperHandPos.y);

@@ -247,12 +247,14 @@ bool ODFrameListener::quit(const CEGUI::EventArgs &)
     return true;
 }
 
-bool ODFrameListener::findWorldPositionFromMouse(const OIS::MouseEvent &arg, Ogre::Vector3& keeperHand3DPos,  Ogre::Vector3& keeperHand3DGround)
+bool ODFrameListener::findWorldPositionFromMouse(Ogre::Vector3& keeperHand3DPos,  Ogre::Vector3& keeperHand3DGround)
 {
     // Setup the ray scene query, use CEGUI's mouse position
     CEGUI::Vector2<float> mousePos = CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().getPosition();// * mMouseScale;
-    Ogre::Ray mouseRay = mCameraManager.getActiveCamera()->getCameraToViewportRay(mousePos.d_x / float(
-            arg.state.width), mousePos.d_y / float(arg.state.height));
+    Ogre::Ray mouseRay =
+        mCameraManager.getActiveCamera()->getCameraToViewportRay(
+            mousePos.d_x / float(mWindow->getWidth()),
+            mousePos.d_y / float(mWindow->getHeight()));
 
     Ogre::Plane handPlane(Ogre::Vector3::UNIT_Z, TILE_HIGH_WORLD_Z) ;
     Ogre::Plane groundPlane(Ogre::Vector3::UNIT_Z, 0.0);

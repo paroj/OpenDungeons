@@ -399,7 +399,7 @@ bool GameMode::mouseMoved(const OIS::MouseEvent &arg)
 
     // Since this is a tile selection query we loop over the result set
     // and look for the first object which is actually a tile.
-    ODFrameListener::getSingleton().findWorldPositionFromMouse(arg, inputManager.mKeeperHandPos, inputManager.mKeeperHandGroundPos);
+    ODFrameListener::getSingleton().findWorldPositionFromMouse(inputManager.mKeeperHandPos, inputManager.mKeeperHandGroundPos);
     RenderManager::getSingleton().moveWorldCoords(inputManager.mKeeperHandPos.x, inputManager.mKeeperHandPos.y);
 
     int tileX = Helper::round(inputManager.mKeeperHandGroundPos.x);
@@ -554,7 +554,7 @@ bool GameMode::mousePressed(const OIS::MouseEvent& arg, OIS::MouseButtonID id)
     if(mGameMap->getGamePaused())
         return true;
 
-    if(!ODFrameListener::getSingleton().findWorldPositionFromMouse(arg, inputManager.mKeeperHandPos,  inputManager.mKeeperHandGroundPos ))
+    if(!ODFrameListener::getSingleton().findWorldPositionFromMouse(inputManager.mKeeperHandPos,  inputManager.mKeeperHandGroundPos ))
         return true;
 
     RenderManager::getSingleton().moveWorldCoords(inputManager.mKeeperHandPos.x, inputManager.mKeeperHandPos.y);
