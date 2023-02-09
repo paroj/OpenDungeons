@@ -231,7 +231,7 @@ bool ODFrameListener::frameEnded(const Ogre::FrameEvent& evt)
 void ODFrameListener::renderQueueStarted(Ogre::uint8 queueGroupId, const Ogre::String& invocation,
     bool&)
 {
-    if(queueGroupId == RenderManager::OD_RENDER_QUEUE_ID_GUI && invocation.empty())
+    if(queueGroupId == RenderManager::OD_RENDER_QUEUE_ID_GUI)
     {
         Ogre::Root::getSingleton().getRenderSystem()->clearFrameBuffer(Ogre::FBT_DEPTH);
         CEGUI::System::getSingleton().renderAllGUIContexts();
