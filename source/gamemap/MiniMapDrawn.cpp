@@ -53,13 +53,12 @@ MiniMapDrawn::MiniMapDrawn(CEGUI::Window* miniMapWindow) :
            + mGrainSize - (static_cast<unsigned int>(mMiniMapWindow->getPixelSize().d_width) % mGrainSize)),
     mHeight(static_cast<unsigned int>(mMiniMapWindow->getPixelSize().d_height)
             + mGrainSize - (static_cast<unsigned int>(mMiniMapWindow->getPixelSize().d_height) % mGrainSize)),
-    mTiles(mWidth * mHeight, Color(0,0,0)),
-    mPixelBox(mWidth, mHeight, 1, Ogre::PF_R8G8B8),
+    mTiles(Ogre::PF_BYTE_RGB, mWidth, mHeight),
     mMiniMapOgreTexture(Ogre::TextureManager::getSingletonPtr()->createManual(
             "miniMapOgreTexture",
             Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
             Ogre::TEX_TYPE_2D,
-            mWidth, mHeight, 0, Ogre::PF_R8G8B8,
+            mWidth, mHeight, 0, Ogre::PF_BYTE_RGB,
             Ogre::TU_DYNAMIC_WRITE_ONLY)),
     mPixelBuffer(mMiniMapOgreTexture->getBuffer()),
     mGameMap(*ODFrameListener::getSingleton().getClientGameMap()),
@@ -233,20 +232,5 @@ void MiniMapDrawn::update(Ogre::Real timeSinceLastFrame, const std::vector<Ogre:
     //     }
     // }
 
-    auto output = mPixelBuffer->lock(mPixelBox, Ogre::HardwareBuffer::HBL_NORMAL);
-
-    size_t xx = 0;
-    size_t yy = 0;
-    for(const Color& color : mTiles)
-    {
-        // TODO: This is probably a bit inefficient at the moment.
-        output.setColourAt(Ogre::ColourValue(color.RR/255.0, color.GG/255.0, color.BB/255.0), xx, yy, 0);
-        ++xx;
-        if(xx == mWidth) {
-            xx = 0;
-            ++yy;
-        }
-    }
-
-    mPixelBuffer->unlock();
+    mPixelBuffer->blitFromMemory(mTiles.getPixelBox());
 }

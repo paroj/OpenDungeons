@@ -41,26 +41,6 @@ namespace CEGUI
 class CameraManager;
 class GameMap;
 
-struct Color
-{
-public:
-    Ogre::uint8 RR;
-    Ogre::uint8 GG;
-    Ogre::uint8 BB;
-
-    Color():
-        RR(0),
-        GG(0),
-        BB(0)
-    {}
-
-    Color(Ogre::uint8 rr, Ogre::uint8 gg, Ogre::uint8 bb):
-        RR(rr),
-        GG(gg),
-        BB(bb)
-    {}
-};
-
 //! \brief The class handling the minimap seen top-right of the in-game screen
 //! FIXME: The pixel are displayed without taking in account the camera current roll value.
 class MiniMapDrawn : public MiniMap
@@ -93,10 +73,8 @@ private:
     double mCosRotation, mSinRotation;
 
     //!brief Vector containing colours to be drawn.
-    //NOTE: The tiles are laid out Y,X in the vector to iterate in the right order when drawing.
-    std::vector<Color> mTiles;
+    Ogre::Image mTiles;
 
-    Ogre::PixelBox mPixelBox;
     Ogre::TexturePtr mMiniMapOgreTexture;
     Ogre::HardwarePixelBufferSharedPtr mPixelBuffer;
 
@@ -106,7 +84,8 @@ private:
         {
             for(int hh = 0; hh < mGrainSize; ++hh)
             {
-                mTiles[xx + gg + ((yy + hh) * mWidth)] = Color(RR, GG, BB);
+                Ogre::uint8* ptr = mTiles.getData(xx + gg, yy + hh);
+                ptr[0] = RR; ptr[1] = GG; ptr[2] = BB;
             }
         }
 
