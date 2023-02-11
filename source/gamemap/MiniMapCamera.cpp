@@ -110,7 +110,6 @@ MiniMapCamera::MiniMapCamera(CEGUI::Window* miniMapWindow) :
 
     updateMinimapCamera();
     mCullingManager->computeIntersectionPoints(mMiniMapCam, mCameraTilesIntersections);
-    mCullingManager->startTileCulling(mMiniMapCam, mCameraTilesIntersections);
 }
 
 MiniMapCamera::~MiniMapCamera()
@@ -158,7 +157,6 @@ void MiniMapCamera::update(Ogre::Real timeSinceLastFrame, const std::vector<Ogre
     mElapsedTime = 0;
     updateMinimapCamera();
     mCullingManager->computeIntersectionPoints(mMiniMapCam, mCameraTilesIntersections);
-    mCullingManager->update(mMiniMapCam, mCameraTilesIntersections);
 
     Ogre::RenderTarget* rt = mMiniMapOgreTexture->getBuffer()->getRenderTarget();
     rt->update();

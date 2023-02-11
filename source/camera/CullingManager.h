@@ -18,9 +18,9 @@
 #ifndef CULLINGMANAGER_H_
 #define CULLINGMANAGER_H_
 
-#include "camera/SlopeWalk.h"
-
-#include "utils/VectorInt64.h"
+#include <cstdint>
+#include <vector>
+#include <OgreVector.h>
 
 class GameMap;
 
@@ -58,43 +58,11 @@ namespace CullingType
 class CullingManager
 {
 public:
-    static const uint32_t HIDE =  1;
-    static const uint32_t SHOW =  2;
-
     CullingManager(GameMap* gameMap, uint32_t cullingMask);
-
-    void startTileCulling(Ogre::Camera* camera, const std::vector<Ogre::Vector3>& ogreVectors);
-
-    void stopTileCulling(const std::vector<Ogre::Vector3>& ogreVectors);
-
-    void update(Ogre::Camera* camera, const std::vector<Ogre::Vector3>& ogreVectors);
 
     //! \brief Computes the intersection points from the camera with the XY plane. The corresponding
     //! vectors are put in ogreVectors
     bool computeIntersectionPoints(Ogre::Camera* camera, std::vector<Ogre::Vector3>& ogreVectors);
-
-private:
-
-    void cullTiles(const std::vector<Ogre::Vector3>& ogreVectors);
-
-    void hideAllTiles();
-    void showAllTiles();
-
-    // set the new tiles
-    void newBashAndSplashTiles(uint32_t);
-
-    void sort(VectorInt64& p1, VectorInt64& p2, bool sortByX);
-
-    // Objects representing past and present walk around the polygon
-    SlopeWalk mWalk;
-    SlopeWalk mOldWalk;
-
-    bool mFirstIter;
-    GameMap* mGameMap;
-
-    uint32_t mCullingMask;
-
-    bool mCullTilesFlag;
 };
 
 #endif // CULLINGMANAGER_H_

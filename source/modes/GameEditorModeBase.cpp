@@ -136,7 +136,6 @@ GameEditorModeBase::GameEditorModeBase(ModeManager* modeManager, ModeManager::Mo
 
     Ogre::Camera* cam = ODFrameListener::getSingleton().getCameraManager()->getActiveCamera();
     mMainCullingManager->computeIntersectionPoints(cam, mCameraTilesIntersections);
-    mMainCullingManager->startTileCulling(cam, mCameraTilesIntersections);
 }
 
 GameEditorModeBase::~GameEditorModeBase()
@@ -196,7 +195,6 @@ void GameEditorModeBase::onFrameStarted(const Ogre::FrameEvent& evt)
 
     Ogre::Camera* cam = ODFrameListener::getSingleton().getCameraManager()->getActiveCamera();
     mMainCullingManager->computeIntersectionPoints(cam, mCameraTilesIntersections);
-    mMainCullingManager->update(cam, mCameraTilesIntersections);
 
     mMiniMap->update(evt.timeSinceLastFrame, mCameraTilesIntersections);
 }

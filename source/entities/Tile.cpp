@@ -66,7 +66,6 @@ Tile::Tile(GameMap* gameMap, int x, int y, TileType type, double fullness) :
     mColorCustomMesh    (true),
     mHasBridge          (false),
     mLocalPlayerHasVision   (false),
-    mTileCulling        (CullingType::HIDE),
     mNbWorkersClaiming(0)
 {
     computeTileVisual();
@@ -1195,14 +1194,6 @@ bool Tile::addEntity(GameEntity *entity)
     }
 
     mEntitiesInTile.push_back(entity);
-    if(!getGameMap()->isServerGameMap())
-    {
-        // On client side, we cull any movable entity that walks over a
-        // culled tile (or show it if it was previously culled and walks
-        // over a non culled tile)
-        entity->setParentNodeDetachFlags(
-            EntityParentNodeAttach::DETACH_CULLING, mTileCulling == CullingType::HIDE);
-    }
     fireTileStateChanged();
     return true;
 }
@@ -1956,27 +1947,6 @@ bool Tile::removeWorkerDigging(const Creature& worker, Tile& tile)
     }
 
     return false;
-}
-
-void Tile::setTileCullingFlags(uint32_t mask, bool value)
-{
-    // We save the current state. If the result is different, we refresh culling
-    mTileCulling = (value ? mTileCulling | mask : mTileCulling & ~mask);
-
-    if(mTileCulling == CullingType::HIDE)
-    {
-        // We cull the tile
-        setParentNodeDetachFlags(EntityParentNodeAttach::DETACH_CULLING, true);
-        for(GameEntity* entity : mEntitiesInTile)
-            entity->setParentNodeDetachFlags(EntityParentNodeAttach::DETACH_CULLING, true);
-    }
-    else
-    {
-        // Here, we want to show the tile
-        setParentNodeDetachFlags(EntityParentNodeAttach::DETACH_CULLING, false);
-        for(GameEntity* entity : mEntitiesInTile)
-            entity->setParentNodeDetachFlags(EntityParentNodeAttach::DETACH_CULLING, false);
-    }
 }
 
 bool Tile::addTileStateListener(TileStateListener& listener)

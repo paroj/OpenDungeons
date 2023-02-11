@@ -19,7 +19,6 @@
 #include "camera/CameraManager.h"
 #include "entities/Tile.h"
 #include "gamemap/GameMap.h"
-#include "utils/VectorInt64.h"
 #include "utils/LogManager.h"
 
 #include <OgreVector3.h>
@@ -31,150 +30,9 @@
 
 static const Ogre::Plane GROUND_PLANE(0, 0, 1, 0);
 
-CullingManager::CullingManager(GameMap* gameMap, uint32_t cullingMask):
-    mFirstIter(false),
-    mGameMap(gameMap),
-    mCullingMask(cullingMask),
-    mCullTilesFlag(false)
+CullingManager::CullingManager(GameMap* gameMap, uint32_t cullingMask)
 {
 }
-
-void CullingManager::cullTiles(const std::vector<Ogre::Vector3>& ogreVectors)
-{
-    mOldWalk = mWalk;
-    mWalk.mVertices.mMyArray.clear();
-    for (int ii = 0 ; ii < 4 ; ++ii)
-        mWalk.mVertices.mMyArray.push_back(VectorInt64(ogreVectors[ii]));
-
-    // create a slope -- a set of left and right path
-    mWalk.convexHull();
-    mWalk.buildSlopes();
-#ifdef DEBUG_CULLING
-    OD_LOG_DBG(mOldWalk.debug());
-    OD_LOG_DBG(mWalk.debug());
-#endif // DEBUG_CULLING
-    // reset index pointers to the begging of collections
-    mOldWalk.prepareWalk();
-    mWalk.prepareWalk();
-
-    newBashAndSplashTiles(SHOW | HIDE);
-}
-
-void CullingManager::startTileCulling(Ogre::Camera* camera, const std::vector<Ogre::Vector3>& ogreVectors)
-{
-    showAllTiles();
-
-    mWalk.mVertices.mMyArray.clear();
-    for (int ii = 0 ; ii < 4 ; ++ii)
-        mWalk.mVertices.mMyArray.push_back(VectorInt64(ogreVectors[ii]));
-
-    mWalk.convexHull();
-    mWalk.buildSlopes();
-    mOldWalk = mWalk;
-    mOldWalk.prepareWalk();
-    mWalk.prepareWalk();
-    hideAllTiles();
-    newBashAndSplashTiles(SHOW);
-
-    mCullTilesFlag = true;
-}
-
-
-void CullingManager::stopTileCulling(const std::vector<Ogre::Vector3>& ogreVectors)
-{
-    mCullTilesFlag = false;
-    mOldWalk = mWalk;
-    mWalk.mVertices.mMyArray.clear();
-    for (int ii = 0 ; ii < 4 ; ++ii)
-        mWalk.mVertices.mMyArray.push_back(VectorInt64(ogreVectors[ii]));
-
-    // create a slope -- a set of left and rigth path
-    mWalk.convexHull();
-    mWalk.buildSlopes();
-
-    OD_LOG_DBG(mOldWalk.debug());
-    OD_LOG_DBG(mWalk.debug());
-
-    // reset index pointers to the begging of collections
-    mOldWalk.prepareWalk();
-    mWalk.prepareWalk();
-
-    newBashAndSplashTiles(HIDE);
-    showAllTiles();
-}
-
-void CullingManager::hideAllTiles(void)
-{
-    for (int jj = 0; jj < mGameMap->getMapSizeY() ; ++jj)
-    {
-        for (int ii = 0; ii < mGameMap->getMapSizeX(); ++ii)
-        {
-            Tile* tile = mGameMap->getTile(ii, jj);
-            tile->setTileCullingFlags(mCullingMask, false);
-        }
-    }
-}
-
-void CullingManager::showAllTiles(void)
-{
-    for (int jj = 0; jj < mGameMap->getMapSizeY() ; ++jj)
-    {
-        for (int ii = 0; ii < mGameMap->getMapSizeX(); ++ii)
-        {
-            Tile* tile = mGameMap->getTile(ii, jj);
-            tile->setTileCullingFlags(mCullingMask, true);
-        }
-    }
-}
-
-void CullingManager::newBashAndSplashTiles(uint32_t mode)
-{
-    int64_t xxLeftOld = mOldWalk.getTopLeftVertex().x;
-    int64_t xxRightOld = mOldWalk.getTopRightVertex().x;
-    int64_t xxLeft = mWalk.getTopLeftVertex().x;
-    int64_t xxRight = mWalk.getTopRightVertex().x;
-    int64_t xxp, yyp;
-    std::stringstream ss;
-    int64_t bb = ((std::min(mWalk.getBottomLeftVertex().y, mOldWalk.getBottomRightVertex().y) >> VectorInt64::PRECISION_DIGITS) - 2) << VectorInt64::PRECISION_DIGITS;    
-
-    for (int64_t yy = ((std::max(mWalk.getTopLeftVertex().y, mOldWalk.getTopRightVertex().y  ) >> VectorInt64::PRECISION_DIGITS) + 2) << VectorInt64::PRECISION_DIGITS; yy >= bb; yy -= VectorInt64::UNIT)
-    {
-        mOldWalk.notifyOnMoveDown(yy);
-        mWalk.notifyOnMoveDown(yy);
-        xxLeft = mWalk.getCurrentXLeft(yy);
-        xxLeftOld = mOldWalk.getCurrentXLeft(yy);
-        xxRight = mWalk.getCurrentXRight(yy);
-        xxRightOld = mOldWalk.getCurrentXRight(yy);
-        int64_t mm = ((std::min(xxLeft, xxLeftOld) >> VectorInt64::PRECISION_DIGITS) << VectorInt64::PRECISION_DIGITS) ;
-
-        if(std::min(xxLeft, xxLeftOld) < std::max(xxRight,xxRightOld))
-        {
-            for (int64_t xx = mm ; xx <= std::max(xxRight,xxRightOld); xx += VectorInt64::UNIT)
-            {
-                bool bash = (xx >= xxLeftOld && xx <= xxRightOld && (yy >= mOldWalk.getBottomLeftVertex().y) && yy <= mOldWalk.getTopLeftVertex().y);
-                bool splash = (xx >= xxLeft && xx <= xxRight && (yy >= mWalk.getBottomLeftVertex().y) && yy <= mWalk.getTopLeftVertex().y);
-
-                xxp = (xx >> VectorInt64::PRECISION_DIGITS);
-                yyp = (yy >> VectorInt64::PRECISION_DIGITS);
-                Tile* tile = mGameMap->getTile(xxp, yyp);
-                if(bash && splash && (mode & HIDE) && (mode & SHOW))
-                {
-                    // Nothing
-                }
-
-                else if (bash && (mode & HIDE) && (tile != nullptr))
-                {
-                    tile->setTileCullingFlags(mCullingMask, false);
-                }
-                else if (splash && (mode & SHOW) && (tile != nullptr))
-                {
-                    tile->setTileCullingFlags(mCullingMask, true);
-                }
-            }
-        }
-    }
-}
-
 bool CullingManager::computeIntersectionPoints(Ogre::Camera* camera, std::vector<Ogre::Vector3>& ogreVectors)
 {
     if(ogreVectors.size() != 4)
@@ -197,28 +55,4 @@ bool CullingManager::computeIntersectionPoints(Ogre::Camera* camera, std::vector
     }
     return true;
 }
-
-void CullingManager::update(Ogre::Camera* camera, const std::vector<Ogre::Vector3>& ogreVectors)
-{
-    if(mCullTilesFlag)
-        cullTiles(ogreVectors);
-}
-
-/*! \brief Sort two VectorInt64 p1 and p2  to satisfy p1 <= p2 according to
- * the value of X or Y coordinate, which depends on sortByX param.
- */
-void CullingManager::sort(VectorInt64& p1, VectorInt64& p2, bool sortByX)
-{
-    if (sortByX)
-    {
-        if (p1.x > p2.x)
-            std::swap(p1, p2);
-    }
-    else
-    {
-        if (p1.y > p2.y)
-            std::swap(p1, p2);
-    }
-}
-
 
