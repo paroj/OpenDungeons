@@ -317,7 +317,7 @@ void colourFromPixelValue(MiniMapDrawnFullPixel pixelValue, Seat* seatIfClaimed,
         for(size_t yy = minimapYMin; yy < minimapYMax; ++yy)
         {
             // TODO: This is probably a bit inefficient at the moment.
-            output.setColourAt(Ogre::ColourValue(RR/255.0, GG/255.0, BB/255.0), xx, output.getHeight() - yy, 0);
+            output.setColourAt(Ogre::ColourValue(RR/255.0, GG/255.0, BB/255.0), xx, output.getHeight() - yy - 1, 0);
 
         }
     }
@@ -627,7 +627,7 @@ void MiniMapDrawnFull::update(Ogre::Real timeSinceLastFrame, const std::vector<O
             for(uint32_t yyy = listener->mMinimapYMin; yyy < listener->mMinimapYMax; ++yyy)
             {
                 output.setColourAt(Ogre::ColourValue(0.0f, 0.0f, 0.0f), xxx,
-                                   output.getHeight() - yyy, 0);
+                                   output.getHeight() - yyy - 1, 0);
             }
         }
     }
