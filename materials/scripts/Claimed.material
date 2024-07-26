@@ -9,7 +9,8 @@ material Claimed : RTSS/NormalMapping_MultiPass
             // Override the normal map.
             rtshader_system
             {
-                lighting_stage normal_map ClaimedNormal.png tangent_space 
+                // lighting_stage normal_map ClaimedNormal.png tangent_space FIXME: this causes the normal map to be added as color
+                transform_stage instanced
             }
 
 
@@ -29,6 +30,11 @@ material Claimed : RTSS/NormalMapping_MultiPass
             texture_unit
             {
                 texture ClaimedMask.png
+            }
+
+            rtshader_system
+            {
+                transform_stage instanced
             }
         }
     }

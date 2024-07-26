@@ -10,6 +10,7 @@ material Dirt : RTSS/NormalMapping_MultiPass
             rtshader_system
             {
                 lighting_stage normal_map DirtNormal.png tangent_space 
+                transform_stage instanced
             }
 
             texture_unit decalmap
