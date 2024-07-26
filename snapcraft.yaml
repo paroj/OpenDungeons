@@ -42,7 +42,7 @@ parts:
             - -DOGRE_BUILD_COMPONENT_MESHLODGENERATOR=FALSE
             - -DCMAKE_INSTALL_PREFIX=/usr/
         source: https://github.com/OGRECave/ogre.git
-        source-tag: v13.6.2
+        source-tag: v13.6.5
         source-depth: 1
         build-packages:
             - libxrandr-dev
