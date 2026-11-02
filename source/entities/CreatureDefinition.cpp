@@ -358,7 +358,7 @@ int CreatureDefinition::getCombatClassTargetPriority(CombatClass target) const
 
 int32_t CreatureDefinition::getFee(unsigned int level) const
 {
-    return mFeeBase + (mFeePerLevel * level);
+    return mFeeBase + (mFeePerLevel * (level - 1));
 }
 
 ODPacket& operator<<(ODPacket& os, const CreatureDefinition* c)

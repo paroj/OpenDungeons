@@ -54,7 +54,7 @@ const std::string& CreatureSkillMissileLaunch::getSkillName() const
 
 double CreatureSkillMissileLaunch::getRangeMax(const Creature* creature, GameEntity* entityAttack) const
 {
-    double level = static_cast<double>(creature->getLevel());
+    double level = static_cast<double>(creature->getLevel()) - 1.0;
     return mRangeMax + (level * mRangePerLvl);
 }
 
@@ -85,10 +85,10 @@ bool CreatureSkillMissileLaunch::tryUseFight(GameMap& gameMap, Creature* creatur
     missileDirection = missileDirection - position;
     missileDirection.normalise();
 
-    double level = static_cast<double>(creature->getLevel());
+    double level = static_cast<double>(creature->getLevel()) - 1.0;
     double phyAtk = mPhyAtk + (level * mPhyAtkPerLvl);
     double magAtk = mMagAtk + (level * mMagAtkPerLvl);
-    double eleAtk = mMagAtk + (level * mEleAtkPerLvl);
+    double eleAtk = mEleAtk + (level * mEleAtkPerLvl);
     if(creature->getWeaponL() != nullptr)
     {
         phyAtk +=creature->getWeaponL()->getPhysicalDamage();
