@@ -27,6 +27,7 @@
 #include "utils/Helper.h"
 #include "utils/LogManager.h"
 #include "utils/MakeUnique.h"
+#include "utils/Random.h"
 
 CreatureActionSearchGroundTileToClaim::CreatureActionSearchGroundTileToClaim(Creature& creature, bool forced) :
     CreatureAction(creature),
@@ -97,7 +98,7 @@ bool CreatureActionSearchGroundTileToClaim::handleSearchGroundTileToClaim(Creatu
     // claimable, find candidates for claiming.
     // Start by checking the neighbor tiles of the one we are already in
     std::vector<Tile*> neighbors = myTile->getAllNeighbors();
-    std::random_shuffle(neighbors.begin(), neighbors.end());
+    Random::shuffle(neighbors.begin(), neighbors.end());
     for(Tile* tile : neighbors)
     {
         // If the current neighbor is claimable, walk into it and skip to the end of this turn

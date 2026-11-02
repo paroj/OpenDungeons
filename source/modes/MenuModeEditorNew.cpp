@@ -33,6 +33,7 @@
 #include "utils/ResourceManager.h"
 
 #include <CEGUI/CEGUI.h>
+#include <OgreString.h>
 #include <boost/filesystem.hpp>
 
 const std::string TEXT_LOADING = "LoadingText";
@@ -135,7 +136,7 @@ bool MenuModeEditorNew::launchSelectedButtonPressed(const CEGUI::EventArgs&)
         window->getChild(TEXT_LOADING)->setText("The level filename already exists.\nPlease set a different filename.");
         return true;
     }
-    if (boost::filesystem::extension(level) != ".level") {
+    if (!Ogre::StringUtil::endsWith(level, ".level")) {
         level.append(".level");
     }
 

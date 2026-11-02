@@ -23,6 +23,9 @@
 #ifndef RANDOM_H_
 #define RANDOM_H_
 
+#include <algorithm>
+#include <cstddef>
+
 namespace Random
 {
     //! \brief initializes the semaphore and seeds the generator
@@ -54,6 +57,17 @@ namespace Random
      *          number entered
      */
     unsigned int Uint(unsigned int min, unsigned int max);
+
+    /*! \brief shuffles the elements in [first, last) using the game's generator */
+    template<typename RandomAccessIterator>
+    void shuffle(RandomAccessIterator first, RandomAccessIterator last)
+    {
+        for(std::ptrdiff_t i = (last - first) - 1; i > 0; --i)
+        {
+            std::swap(first[i], first[static_cast<std::ptrdiff_t>(
+                Uint(0, static_cast<unsigned int>(i)))]);
+        }
+    }
 
     /*! \brief generates a gaussian distributed random double
      *

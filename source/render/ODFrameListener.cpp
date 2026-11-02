@@ -98,7 +98,7 @@ ODFrameListener::ODFrameListener(const std::string& mainSceneFileName, Ogre::Ren
     windowResized(mWindow);
 
     //Register as a Window listener
-    Ogre::WindowEventUtilities::addWindowEventListener(mWindow, this);
+    OgreBites::WindowEventUtilities::addWindowEventListener(mWindow, this);
 
     readMainScene(mainSceneFileName);
 
@@ -147,7 +147,7 @@ void ODFrameListener::exitApplication()
 
     OD_LOG_INF("Remove listener registration");
     //Remove ourself as a Window listener
-    Ogre::WindowEventUtilities::removeWindowEventListener(mWindow, this);
+    OgreBites::WindowEventUtilities::removeWindowEventListener(mWindow, this);
 
     OD_LOG_INF("Frame listener uninitialization done.");
     mInitialized = false;
@@ -172,7 +172,7 @@ bool ODFrameListener::frameRenderingQueued(const Ogre::FrameEvent& evt)
     if (mWindow->isClosed())
         return false;
 
-    Ogre::WindowEventUtilities::messagePump();
+    OgreBites::WindowEventUtilities::messagePump();
 
     // Sleep to limit the framerate to the max value
     mFpsLimiter.sleepIfEarly();

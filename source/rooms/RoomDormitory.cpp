@@ -31,6 +31,7 @@
 #include "utils/Helper.h"
 #include "utils/LogManager.h"
 #include "utils/MakeUnique.h"
+#include "utils/Random.h"
 
 const std::string RoomDormitoryName = "Dormitory";
 const std::string RoomDormitoryNameDisplay = "Dormitory room";
@@ -329,7 +330,7 @@ Tile* RoomDormitory::getLocationForBed(Creature* creature)
             return nullptr;
 
         // Randomly shuffle the open tiles in tempVector so that the dormitory are filled up in a random order.
-        std::random_shuffle(tempVector.begin(), tempVector.end());
+        Random::shuffle(tempVector.begin(), tempVector.end());
 
         // Loop over each of the open tiles in tempVector and for each one, check to see if it
         for (unsigned int i = 0; i < tempVector.size(); ++i)

@@ -29,6 +29,7 @@
 #include "utils/ConfigManager.h"
 #include "utils/Helper.h"
 #include "utils/LogManager.h"
+#include "utils/Random.h"
 
 #include <CEGUI/Window.h>
 #include <CEGUI/widgets/PushButton.h>
@@ -649,7 +650,7 @@ void SkillManager::buildRandomPendingSkillsForSeat(std::vector<SkillType>& skill
     // Now, availableSkills only contains skills that can be done (but unsorted).
     // We need to shuffle that and fill skills.
     doneSkills = seat->getSkillDone();
-    std::random_shuffle(availableSkills.begin(), availableSkills.end());
+    Random::shuffle(availableSkills.begin(), availableSkills.end());
     for(const SkillDef* skill : availableSkills)
     {
         // Since buildDependencies guarantees to not add duplicate skills, it is safe

@@ -41,6 +41,7 @@
 
 #include <OgreBone.h>
 #include <OgreCamera.h>
+#include <OgreTexture.h>
 #include <OgreCompositorManager.h>
 #include <OgreEntity.h>
 #include <OgreMaterialManager.h>
@@ -276,10 +277,10 @@ Ogre::Entity* RenderManager::addEntityMenu(const std::string& meshName, const st
 
     Ogre::Entity* ent = mSceneManager->createEntity(entityName, meshName);
     Ogre::MeshPtr meshPtr = ent->getMesh();
-    unsigned short src, dest;
-    if (!meshPtr->suggestTangentVectorBuildParams(Ogre::VES_TANGENT, src, dest))
+    unsigned short src;
+    if (!meshPtr->suggestTangentVectorBuildParams(src))
     {
-        meshPtr->buildTangentVectors(Ogre::VES_TANGENT, src, dest);
+        meshPtr->buildTangentVectors(src);
     }
 
     Ogre::SceneNode* node = mMainMenuSceneNode->createChildSceneNode(ent->getName() + "_node");
@@ -502,10 +503,10 @@ void RenderManager::rrRefreshTile(const Tile& tile, const GameMap& gameMap, cons
         tileMeshNode->attachObject(tileMeshEnt);
 
         Ogre::MeshPtr meshPtr = tileMeshEnt->getMesh();
-        unsigned short src, dest;
-        if (!meshPtr->suggestTangentVectorBuildParams(Ogre::VES_TANGENT, src, dest))
+        unsigned short src;
+        if (!meshPtr->suggestTangentVectorBuildParams(src))
         {
-            meshPtr->buildTangentVectors(Ogre::VES_TANGENT, src, dest);
+            meshPtr->buildTangentVectors(src);
         }
     }
 
@@ -574,10 +575,10 @@ void RenderManager::rrRefreshTile(const Tile& tile, const GameMap& gameMap, cons
         customMeshNode->resetOrientation();
 
         Ogre::MeshPtr meshPtr = customMeshEnt->getMesh();
-        unsigned short src, dest;
-        if (!meshPtr->suggestTangentVectorBuildParams(Ogre::VES_TANGENT, src, dest))
+        unsigned short src;
+        if (!meshPtr->suggestTangentVectorBuildParams(src))
         {
-            meshPtr->buildTangentVectors(Ogre::VES_TANGENT, src, dest);
+            meshPtr->buildTangentVectors(src);
         }
     }
 
@@ -799,10 +800,10 @@ void RenderManager::rrCreateCreature(Creature* curCreature)
     std::string creatureName = curCreature->getOgreNamePrefix() + curCreature->getName();
     Ogre::Entity* ent = mSceneManager->createEntity(creatureName, meshName);
     Ogre::MeshPtr meshPtr = ent->getMesh();
-    unsigned short src, dest;
-    if (!meshPtr->suggestTangentVectorBuildParams(Ogre::VES_TANGENT, src, dest))
+    unsigned short src;
+    if (!meshPtr->suggestTangentVectorBuildParams(src))
     {
-        meshPtr->buildTangentVectors(Ogre::VES_TANGENT, src, dest);
+        meshPtr->buildTangentVectors(src);
     }
 
     Ogre::SceneNode* node = mCreatureSceneNode->createChildSceneNode(creatureName + "_node");
@@ -1484,10 +1485,10 @@ std::string RenderManager::setMaterialOpacity(const std::string& materialName, f
     }
 
     // Loop over the techniques for the new material
-    for (auto i = 0; i < newMaterial->getNumTechniques(); ++i)
+    for (size_t i = 0; i < newMaterial->getNumTechniques(); ++i)
     {
         Ogre::Technique* technique = newMaterial->getTechnique(i);
-        for(auto j = 0; j < technique->getNumPasses(); ++j)
+        for(size_t j = 0; j < technique->getNumPasses(); ++j)
         {
             // Set alpha value for all passes
             Ogre::Pass* pass = technique->getPass(j);

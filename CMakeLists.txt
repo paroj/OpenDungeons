@@ -1,10 +1,16 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.10)
 
 ##################################
 #### Project settings ############
 ##################################
 
 project(opendungeons)
+
+# Use Boost's package configuration files with CMake 3.30+, where the
+# bundled FindBoost module was removed.
+if(POLICY CMP0167)
+    cmake_policy(SET CMP0167 NEW)
+endif()
 
 # Set a capitalized exe name on Windows
 if(WIN32)
@@ -506,7 +512,7 @@ ENDIF ()
 
 find_package(Threads REQUIRED)
 find_package(OIS REQUIRED)
-find_package(OGRE REQUIRED CONFIG)
+find_package(OGRE REQUIRED CONFIG COMPONENTS Bites Overlay RTShaderSystem)
 set(RTSHADER_DIR "${OGRE_MEDIA_DIR}/RTShaderLib") # use upstream version
 set(OGRE_PLUGIN_DIR_REL ${OGRE_PLUGIN_DIR})
 set(OGRE_PLUGIN_DIR_DBG ${OGRE_PLUGIN_DIR})
@@ -516,8 +522,8 @@ if(OD_USE_SFML_WINDOW)
 else()
     find_package(SFML 2 REQUIRED COMPONENTS Audio System Network)
 endif()
-if("${OGRE_VERSION}" VERSION_LESS "1.9.0")
-    message(FATAL_ERROR "OGRE version >= 1.9.0 required")
+if("${OGRE_VERSION}" VERSION_LESS "14.0.0")
+    message(FATAL_ERROR "OGRE version >= 14.0.0 required")
 endif()
 
 if("${CEGUI_VERSION}" VERSION_LESS "0.8.0")
@@ -648,8 +654,7 @@ if(OD_HAS_BUILD_SUFFIX)
     SET_TARGET_PROPERTIES(${PROJECT_BINARY_NAME} PROPERTIES OUTPUT_NAME_DEBUG "${PROJECT_BINARY_NAME}${OD_BUILD_SUFFIX}")
 endif()
 
-# The name of the OGRE Overlay library is available as CMAKE variable, also discovering debug versions correctly; please leave it like that!
-target_link_libraries(${PROJECT_BINARY_NAME} ${OGRE_Overlay_LIBRARY})
+target_link_libraries(${PROJECT_BINARY_NAME} ${OGRE_Overlay_LIBRARIES})
 
 # We link needed libraries to display stacktrace on uncatched exception
 if(MINGW)
@@ -705,15 +710,38 @@ else()
 endif()
 
 # Do the configuration
-# Convoluted check because old CMake has no VERSION_GREATER_EQUAL,
-# we want this true for 1.11 or later since plugins have to be declared manually.
-if("${OGRE_VERSION}" VERSION_LESS "1.11")
-    set(OD_OGRE_VERSION_SPECIFIC_PLUGINS "")
-else()
-    set(OD_OGRE_VERSION_SPECIFIC_PLUGINS "Plugin=Codec_STBI")
-    if(OGRE_RenderSystem_GL3Plus_FOUND)
-        string(APPEND OD_OGRE_VERSION_SPECIFIC_PLUGINS "\nPlugin=RenderSystem_GL3Plus")
-    endif()
+# Plugins have to be declared manually since Ogre 1.11. Only load render
+# systems and codecs that the system Ogre installation was built with.
+set(OD_OGRE_PLUGINS "")
+if(OGRE_Codec_STBI_FOUND)
+    string(APPEND OD_OGRE_PLUGINS "Plugin=Codec_STBI\n")
+endif()
+if(OGRE_RenderSystem_GL_FOUND)
+    string(APPEND OD_OGRE_PLUGINS "Plugin=RenderSystem_GL\n")
+endif()
+if(OGRE_RenderSystem_GL3Plus_FOUND)
+    string(APPEND OD_OGRE_PLUGINS "Plugin=RenderSystem_GL3Plus\n")
+endif()
+if(OGRE_Plugin_GLSLangProgramManager_FOUND)
+    string(APPEND OD_OGRE_PLUGINS "Plugin=Plugin_GLSLangProgramManager\n")
+endif()
+if(NOT OGRE_RenderSystem_GL_FOUND AND NOT OGRE_RenderSystem_GL3Plus_FOUND)
+    message(FATAL_ERROR "Ogre was built without a supported OpenGL render system")
+endif()
+
+# Debug plugin names use the "_d" postfix.
+set(OD_OGRE_PLUGINS_D "")
+if(OGRE_Codec_STBI_FOUND)
+    string(APPEND OD_OGRE_PLUGINS_D "Plugin=Codec_STBI_d\n")
+endif()
+if(OGRE_RenderSystem_GL_FOUND)
+    string(APPEND OD_OGRE_PLUGINS_D "Plugin=RenderSystem_GL_d\n")
+endif()
+if(OGRE_RenderSystem_GL3Plus_FOUND)
+    string(APPEND OD_OGRE_PLUGINS_D "Plugin=RenderSystem_GL3Plus_d\n")
+endif()
+if(OGRE_Plugin_GLSLangProgramManager_FOUND)
+    string(APPEND OD_OGRE_PLUGINS_D "Plugin=Plugin_GLSLangProgramManager_d\n")
 endif()
 configure_file(${CMAKE_CONFIG_DIR}/plugins.cfg.in ${CMAKE_BINARY_DIR}/plugins.cfg)
 if(WIN32)

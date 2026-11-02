@@ -44,14 +44,13 @@ on our wiki: https://github.com/OpenDungeons/OpenDungeons/wiki/Compile
 
 In a few words, to build OpenDungeons, you need the following libraries:
 
-- OGRE SDK (1.9.x)
+- OGRE 14.x (installed system-wide)
 - Boost (same version that OGRE was linked against)
 - CEGUI SDK (0.8.x)
 - SFML (2.x)
 - OIS
 
-You will also need a recent CMake version (2.8 or newer) and a compiler
-that supports C++11 features reasonably well, i.e.:
+You will also need CMake 3.10 or newer and a compiler that supports C++14, i.e.:
 
 - Linux: GCC 4.8+
 - Windows: MSVS 2013 Express or MinGW 4.8+

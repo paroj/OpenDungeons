@@ -32,6 +32,7 @@
 #include "utils/ConfigManager.h"
 #include "utils/Helper.h"
 #include "utils/LogManager.h"
+#include "utils/Random.h"
 
 const std::string SpellCreatureExplosionName = "creatureExplosion";
 const std::string SpellCreatureExplosionNameDisplay = "Creature explosion";
@@ -111,7 +112,7 @@ void SpellCreatureExplosion::checkSpellCast(GameMap* gameMap, const InputManager
         return;
     }
 
-    std::random_shuffle(targets.begin(), targets.end());
+    Random::shuffle(targets.begin(), targets.end());
     std::vector<Creature*> creatures;
     for(GameEntity* target : targets)
     {

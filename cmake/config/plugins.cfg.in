@@ -4,11 +4,10 @@
 PluginFolder=@OD_OGRE_PLUGIN_DIR_REL@
 
 # Define plugins
-Plugin=RenderSystem_GL
 Plugin=Plugin_ParticleFX
 
-# Version-specific plugins (e.g. codecs for 1.11+)
-@OD_OGRE_VERSION_SPECIFIC_PLUGINS@
+# Render systems and codecs available in the system Ogre installation
+@OD_OGRE_PLUGINS@
 
 #This is a card specific library, installed on some systems but not on others
 #Cg is also obsolete and nonfree

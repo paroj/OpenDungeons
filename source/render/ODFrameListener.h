@@ -68,7 +68,7 @@ namespace Ogre
 class ODFrameListener :
         public Ogre::Singleton<ODFrameListener>,
         public Ogre::FrameListener,
-        public Ogre::WindowEventListener,
+        public OgreBites::WindowEventListener,
         public Ogre::RenderQueueListener
 {
 

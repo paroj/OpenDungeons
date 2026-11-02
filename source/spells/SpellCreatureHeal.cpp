@@ -33,6 +33,7 @@
 #include "utils/ConfigManager.h"
 #include "utils/Helper.h"
 #include "utils/LogManager.h"
+#include "utils/Random.h"
 
 const std::string SpellCreatureHealName = "creatureHeal";
 const std::string SpellCreatureHealNameDisplay = "Creature heal";
@@ -118,7 +119,7 @@ void SpellCreatureHeal::checkSpellCast(GameMap* gameMap, const InputManager& inp
         return;
     }
 
-    std::random_shuffle(targets.begin(), targets.end());
+    Random::shuffle(targets.begin(), targets.end());
     std::vector<Creature*> creatures;
     for(GameEntity* target : targets)
     {

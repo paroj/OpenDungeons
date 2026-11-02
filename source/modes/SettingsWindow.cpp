@@ -17,6 +17,7 @@
 
 #include "modes/SettingsWindow.h"
 
+#include "ODApplication.h"
 #include "gamemap/MiniMap.h"
 #include "render/RenderManager.h"
 #include "utils/ConfigManager.h"
@@ -482,7 +483,12 @@ void SettingsWindow::saveConfig()
     // Apply config
 
     // Video
-    Ogre::RenderWindow* win = ogreRoot->getAutoCreatedWindow();
+#ifdef OD_USE_SFML_WINDOW
+    Ogre::RenderWindow* win = nullptr;
+#else
+    Ogre::RenderWindow* win = dynamic_cast<Ogre::RenderWindow*>(
+        ogreRoot->getRenderTarget("OpenDungeons " + ODApplication::VERSION));
+#endif
     if(win == nullptr)
     {
         OD_LOG_WRN("Changing window options when using sfml is not implemented yet! Please restart for the changes to have an effect.");
