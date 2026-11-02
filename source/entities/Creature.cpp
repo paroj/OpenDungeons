@@ -99,6 +99,21 @@
 
 static const Ogre::Real CANNON_MISSILE_HEIGHT = 0.3;
 
+namespace
+{
+//! \brief Armour absorbs a fraction of the incoming damage.
+//! 256 armour would absorb all damage, but the value is capped so that a
+//! creature always keeps a share of its health when hit.
+const double ARMOUR_DIVISOR = 256.0;
+const double ARMOUR_CAP = 204.0;
+
+double applyArmour(double armour, double damage)
+{
+    armour = std::max(0.0, std::min(armour, ARMOUR_CAP));
+    return damage * (1.0 - armour / ARMOUR_DIVISOR);
+}
+}
+
 const int32_t Creature::NB_TURNS_BEFORE_CHECKING_TASK = 15;
 const uint32_t Creature::NB_OVERLAY_HEALTH_VALUES = 8;
 
@@ -1970,9 +1985,9 @@ double Creature::takeDamage(GameEntity* attacker, double absoluteDamage, double 
         Tile *tileTakingDamage, bool ko)
 {
     mNbTurnsWithoutBattle = 0;
-    physicalDamage = std::max(physicalDamage - getPhysicalDefense(), 0.0);
-    magicalDamage = std::max(magicalDamage - getMagicalDefense(), 0.0);
-    elementDamage = std::max(elementDamage - getElementDefense(), 0.0);
+    physicalDamage = applyArmour(getPhysicalDefense(), physicalDamage);
+    magicalDamage = applyArmour(getMagicalDefense(), magicalDamage);
+    elementDamage = applyArmour(getElementDefense(), elementDamage);
     double damageDone = std::min(mHp, absoluteDamage + physicalDamage + magicalDamage + elementDamage);
     mHp -= damageDone;
     if(mHp <= 0)
