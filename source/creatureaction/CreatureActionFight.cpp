@@ -28,6 +28,9 @@
 #include "utils/LogManager.h"
 #include "utils/MakeUnique.h"
 
+#include <algorithm>
+#include <limits>
+
 CreatureActionFight::CreatureActionFight(Creature& creature, GameEntity* entityAttack, bool koOpponent, bool notifyPlayerIfHit) :
     CreatureAction(creature),
     mEntityAttack(entityAttack),
@@ -122,6 +125,32 @@ bool CreatureActionFight::handleFight(Creature& creature, GameEntity* entityAtta
                     enemySecondaryTargets.push_back(entity);
                 }
             }
+        }
+
+        // Keep only the creatures of the most preferred combat class that
+        // is currently visible.
+        if(enemyPrioritaryTargets.size() > 1)
+        {
+            const CreatureDefinition* definition = creature.getDefinition();
+            int bestPriority = std::numeric_limits<int>::max();
+            for(GameEntity* entity : enemyPrioritaryTargets)
+            {
+                const Creature* enemy = static_cast<const Creature*>(entity);
+                int priority = definition->getCombatClassTargetPriority(
+                    enemy->getDefinition()->getCombatClass());
+                if(priority < bestPriority)
+                    bestPriority = priority;
+            }
+
+            enemyPrioritaryTargets.erase(
+                std::remove_if(enemyPrioritaryTargets.begin(), enemyPrioritaryTargets.end(),
+                    [definition, bestPriority](GameEntity* entity)
+                    {
+                        const Creature* enemy = static_cast<const Creature*>(entity);
+                        return definition->getCombatClassTargetPriority(
+                            enemy->getDefinition()->getCombatClass()) != bestPriority;
+                    }),
+                enemyPrioritaryTargets.end());
         }
     }
 
