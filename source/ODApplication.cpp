@@ -69,7 +69,8 @@
 #ifndef OD_USE_SFML_WINDOW
 namespace
 {
-//! \brief ApplicationContext subclass that creates the game window.
+//! \brief ApplicationContext subclass that creates the game window and exposes
+//!        the display DPI used for UI scaling.
 class ODApplicationContext : public OgreBites::ApplicationContext
 {
 public:
@@ -191,6 +192,7 @@ void ODApplication::startClient()
     Ogre::Root* ogreRoot = nullptr;
     Ogre::RenderWindow* renderWindow = nullptr;
     Ogre::OverlaySystem* overlaySystem = nullptr;
+    float displayDpi = 0.0f;
 
 #ifdef OD_USE_SFML_WINDOW
     Ogre::Root sfmlRoot(resMgr.getPluginsPath(), "");
@@ -250,7 +252,9 @@ void ODApplication::startClient()
     }();
     renderWindow->setVisible(true);
 #else
-    // ApplicationContext creates the Ogre root and the main window.
+    // ApplicationContext creates the Ogre root and the main window. Besides
+    // removing boilerplate it is also what gives us the display DPI used for
+    // UI scaling.
     std::unique_ptr<ODApplicationContext, ApplicationContextDeleter> appContext(new ODApplicationContext());
     appContext->initApp();
 
@@ -259,6 +263,8 @@ void ODApplication::startClient()
     overlaySystem = appContext->getOverlaySystem();
     if ((ogreRoot == nullptr) || (renderWindow == nullptr) || (overlaySystem == nullptr))
         return;
+
+    displayDpi = appContext->getDisplayDPI();
 #endif /* OD_USE_SFML_WINDOW */
 
 
@@ -304,7 +310,7 @@ void ODApplication::startClient()
     RenderManager renderManager(overlaySystem);
 
     Ogre::MaterialManager::getSingleton().setActiveScheme(Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
-    Gui gui(&soundEffectsManager, resMgr.getCeguiLogFile(), *renderWindow);
+    Gui gui(&soundEffectsManager, resMgr.getCeguiLogFile(), *renderWindow, displayDpi);
     TextRenderer textRenderer;
     textRenderer.addTextBox("DebugMessages", ODApplication::MOTD.c_str(), 840,
                                 30, 50, 70, Ogre::ColourValue::Green);

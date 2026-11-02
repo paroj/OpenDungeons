@@ -63,6 +63,7 @@
 #include "network/ODServer.h"
 #include "network/ServerNotification.h"
 #include "render/CreatureOverlayStatus.h"
+#include "render/Gui.h"
 #include "render/RenderManager.h"
 #include "rooms/RoomCrypt.h"
 #include "rooms/RoomDormitory.h"
@@ -1877,6 +1878,7 @@ void Creature::createStatsWindow()
 
     mStatsWindow->addChild(textWindow);
     rootWindow->addChild(mStatsWindow);
+    Gui::scaleWindowTree(*mStatsWindow);
     mStatsWindow->show();
 
     updateStatsWindow("Loading...");

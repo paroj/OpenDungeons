@@ -25,6 +25,7 @@
 #define GUI_H_
 
 #include <CEGUI/InputEvent.h>
+#include <CEGUI/Size.h>
 
 #include <OISMouse.h>
 
@@ -71,7 +72,8 @@ public:
      *  including renderer, system, resource provider, setting defaults,
      *  loading all sheets, assigning all event handler
      */
-    Gui(SoundEffectsManager* soundEffectsManager, const std::string& ceguiLogFileName, Ogre::RenderTarget& renderTarget);
+    Gui(SoundEffectsManager* soundEffectsManager, const std::string& ceguiLogFileName,
+        Ogre::RenderTarget& renderTarget, float displayDpi = 0.0f);
     Gui(const Gui&) = delete;
 
     ~Gui();
@@ -83,6 +85,19 @@ public:
     static CEGUI::MouseButton convertButton (OIS::MouseButtonID buttonID);
 
     CEGUI::Window* getGuiSheet(guiSheet sheet);
+
+    //! \brief Scale factor currently applied to CEGUI widgets and fonts.
+    static float getUiScale();
+
+    /*! \brief Apply the UI scale to a CEGUI window and its children.
+     *
+     *  Windows that were already scaled are left untouched, so this can be
+     *  called for windows created after the initial layout was loaded.
+     */
+    static void scaleWindowTree(CEGUI::Window& window);
+
+    //! \brief Update scaled images before CEGUI applies a new display size.
+    static void notifyDisplaySizeChanged(const CEGUI::Sizef& displaySize);
 
     // Access names of the GUI elements
     static const std::string ROOT;
@@ -149,6 +164,8 @@ public:
     bool playButtonClickSound(const CEGUI::EventArgs& e = {});
 
 private:
+    static float msUiScale;
+
     std::map<guiSheet, CEGUI::Window*> mSheets;
 
     SoundEffectsManager* mSoundEffectsManager;

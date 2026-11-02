@@ -24,9 +24,13 @@
 
 #include "ODApplication.h"
 #include "sound/SoundEffectsManager.h"
+#include "utils/Helper.h"
 #include "utils/LogManager.h"
 
 #include <CEGUI/CEGUI.h>
+#include <CEGUI/BasicImage.h>
+#include <CEGUI/FontManager.h>
+#include <CEGUI/ImageManager.h>
 #include <CEGUI/RendererModules/Ogre/Renderer.h>
 #include <CEGUI/RendererModules/Ogre/ResourceProvider.h>
 #include <CEGUI/RendererModules/Ogre/ImageCodec.h>
@@ -36,7 +40,91 @@
 #include <CEGUI/widgets/PushButton.h>
 #include <CEGUI/Event.h>
 
-Gui::Gui(SoundEffectsManager* soundEffectsManager, const std::string& ceguiLogFileName, Ogre::RenderTarget &renderTarget)
+#include <OgreRenderTarget.h>
+#include <Overlay/OgreOverlayManager.h>
+
+namespace
+{
+const char* const UI_SCALE_WINDOW_PROPERTY = "OpenDungeonsUiScaled";
+const char* const UI_SCALE_BACKGROUND_PREFIX = "ODMainMenuBackground/";
+
+CEGUI::UDim scaleUDim(const CEGUI::UDim& value, float scale)
+{
+    return CEGUI::UDim(value.d_scale, value.d_offset * scale);
+}
+
+CEGUI::UVector2 scaleUVector2(const CEGUI::UVector2& value, float scale)
+{
+    return CEGUI::UVector2(scaleUDim(value.d_x, scale), scaleUDim(value.d_y, scale));
+}
+
+CEGUI::USize scaleUSize(const CEGUI::USize& value, float scale)
+{
+    return CEGUI::USize(scaleUDim(value.d_width, scale), scaleUDim(value.d_height, scale));
+}
+
+float computeUiScale(float displayDpi)
+{
+    if(displayDpi > 0.0f)
+    {
+        OD_LOG_INF("Display DPI reported by Ogre: " + Helper::toString(displayDpi));
+        return displayDpi / 96.0f;
+    }
+
+    OD_LOG_WRN("No display DPI available. Using UI scale 1.0.");
+    return 1.0f;
+}
+
+void scaleFonts(float scale)
+{
+    CEGUI::FontManager& fontManager = CEGUI::FontManager::getSingleton();
+    CEGUI::FontManager::FontIterator it = fontManager.getIterator();
+    while(!it.isAtEnd())
+    {
+        CEGUI::Font& font = fontManager.get(it.getCurrentKey());
+        if(font.isPropertyPresent("PointSize"))
+        {
+            const float pointSize = font.getProperty<float>("PointSize");
+            font.setProperty<float>("PointSize", pointSize * scale);
+        }
+        ++it;
+    }
+}
+
+void updateImageScaling(float scale, const CEGUI::Sizef& displaySize)
+{
+    if(scale == 1.0f)
+        return;
+
+    const CEGUI::Sizef nativeResolution(displaySize.d_width / scale,
+                                        displaySize.d_height / scale);
+
+    CEGUI::ImageManager& imageManager = CEGUI::ImageManager::getSingleton();
+    CEGUI::ImageManager::ImageIterator it = imageManager.getIterator();
+    while(!it.isAtEnd())
+    {
+        const CEGUI::String& name = it.getCurrentKey();
+        // Font glyph images have numeric names and backgrounds already scale
+        // to the full display size, so leave both of them alone.
+        if((name.find('/') != CEGUI::String::npos)
+            && (name.find(UI_SCALE_BACKGROUND_PREFIX) != 0))
+        {
+            CEGUI::BasicImage* image = dynamic_cast<CEGUI::BasicImage*>((*it).first);
+            if(image != nullptr)
+            {
+                image->setAutoScaled(CEGUI::ASM_Both);
+                image->setNativeResolution(nativeResolution);
+            }
+        }
+        ++it;
+    }
+}
+} // namespace
+
+float Gui::msUiScale = 1.0f;
+
+Gui::Gui(SoundEffectsManager* soundEffectsManager, const std::string& ceguiLogFileName,
+         Ogre::RenderTarget& renderTarget, float displayDpi)
   : mSoundEffectsManager(soundEffectsManager)
 {
     OD_LOG_INF("*** Initializing CEGUI ***");
@@ -52,6 +140,15 @@ Gui::Gui(SoundEffectsManager* soundEffectsManager, const std::string& ceguiLogFi
 
     CEGUI::SchemeManager::getSingleton().createFromFile("ODSkin.scheme");
     OD_LOG_INF("CEGUI::SchemeManager created");
+
+    msUiScale = computeUiScale(displayDpi);
+    OD_LOG_INF("UI scale: " + Helper::toString(msUiScale));
+    if(msUiScale != 1.0f)
+    {
+        scaleFonts(msUiScale);
+        updateImageScaling(msUiScale, CEGUI::Sizef(renderTarget.getWidth(), renderTarget.getHeight()));
+        Ogre::OverlayManager::getSingleton().setPixelRatio(msUiScale);
+    }
 
     // We want Ogre overlays to be displayed in front of CEGUI. According to
     // http://cegui.org.uk/forum/viewtopic.php?f=10&t=5694
@@ -81,6 +178,9 @@ Gui::Gui(SoundEffectsManager* soundEffectsManager, const std::string& ceguiLogFi
     mSheets[replayMenu] =  wmgr->loadLayoutFromFile("MenuReplay.layout");
     mSheets[loadSavedGameMenu] =  wmgr->loadLayoutFromFile("MenuLoad.layout");
     mSheets[console] = wmgr->loadLayoutFromFile("WindowConsole.layout");
+
+    for(auto& sheet : mSheets)
+        scaleWindowTree(*sheet.second);
 
     // Set the game version
     mSheets[mainMenu]->getChild("VersionText")->setText(ODApplication::VERSION);
@@ -129,6 +229,37 @@ CEGUI::Window* Gui::getGuiSheet(guiSheet sheet)
         return it->second;
     }
     return nullptr;
+}
+
+float Gui::getUiScale()
+{
+    return msUiScale;
+}
+
+void Gui::scaleWindowTree(CEGUI::Window& window)
+{
+    // Widgets generated by a look'n'feel (title bars, close buttons, ...) size
+    // and position themselves from their parent and the scaled fonts/images,
+    // so leave their areas to CEGUI.
+    const bool autoCreated = window.getName().find("__auto_") != CEGUI::String::npos;
+    if(msUiScale != 1.0f && !autoCreated && !window.isUserStringDefined(UI_SCALE_WINDOW_PROPERTY))
+    {
+        window.setUserString(UI_SCALE_WINDOW_PROPERTY, "true");
+        window.setMinSize(scaleUSize(window.getMinSize(), msUiScale));
+        window.setMaxSize(scaleUSize(window.getMaxSize(), msUiScale));
+
+        const CEGUI::URect& area = window.getArea();
+        window.setArea(CEGUI::URect(scaleUVector2(area.d_min, msUiScale),
+                                    scaleUVector2(area.d_max, msUiScale)));
+    }
+
+    for(size_t i = 0; i < window.getChildCount(); ++i)
+        scaleWindowTree(*window.getChildAtIdx(i));
+}
+
+void Gui::notifyDisplaySizeChanged(const CEGUI::Sizef& displaySize)
+{
+    updateImageScaling(msUiScale, displaySize);
 }
 
 bool Gui::playButtonClickSound(const CEGUI::EventArgs&)

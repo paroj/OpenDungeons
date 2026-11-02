@@ -1938,4 +1938,6 @@ void GameMode::buildPlayerSettingsWindow()
         mSeatIds.push_back(seat->getId());
         offset += 15;
     }
+
+    Gui::scaleWindowTree(*tmpWin);
 }

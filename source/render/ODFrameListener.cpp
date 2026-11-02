@@ -113,8 +113,9 @@ void ODFrameListener::windowResized(Ogre::RenderWindow* rw)
 
     mModeManager->getInputManager().setWidthAndHeight(width, height);
     //Notify CEGUI that the display size has changed.
-    CEGUI::System::getSingleton().notifyDisplaySizeChanged(CEGUI::Size<float>(
-            static_cast<float> (width), static_cast<float> (height)));
+    const CEGUI::Sizef displaySize(static_cast<float>(width), static_cast<float>(height));
+    Gui::notifyDisplaySizeChanged(displaySize);
+    CEGUI::System::getSingleton().notifyDisplaySizeChanged(displaySize);
 }
 
 void ODFrameListener::windowClosed(Ogre::RenderWindow*)

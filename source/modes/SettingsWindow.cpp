@@ -19,6 +19,7 @@
 
 #include "ODApplication.h"
 #include "gamemap/MiniMap.h"
+#include "render/Gui.h"
 #include "render/RenderManager.h"
 #include "utils/ConfigManager.h"
 #include "utils/LogManager.h"
@@ -64,6 +65,9 @@ SettingsWindow::SettingsWindow(CEGUI::Window* rootWindow):
     }
     rootWindow->addChild(mApplyWindow);
     mApplyWindow->hide();
+
+    Gui::scaleWindowTree(*mSettingsWindow);
+    Gui::scaleWindowTree(*mApplyWindow);
 
     // Events connections
     // Settings window
@@ -368,6 +372,8 @@ void SettingsWindow::initConfig()
         }
         offset += 30;
     }
+
+    Gui::scaleWindowTree(*videoTab);
 }
 
 void SettingsWindow::saveConfig()
