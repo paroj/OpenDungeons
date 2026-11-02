@@ -1,22 +1,44 @@
 name: opendungeons
-version: "0.7.2+ogre13"
+version: "0.8.0+ogre14"
 confinement: strict
 summary: OpenDungeons
-base: core20
+base: core24
 description: Open source game inspired by Dungeon Keeper - Dark, damp and dangerous.
+
+title: OpenDungeons
+contact: https://github.com/paroj/OpenDungeons/issues
+license: GPL-3.0-or-later
+issues: https://github.com/paroj/OpenDungeons/issues
+source-code: https://github.com/paroj/OpenDungeons
+
+plugs:
+  gpu-2404:
+    interface: content
+    target: $SNAP/gpu-2404
+    default-provider: mesa-2404
+
+layout:
+  /usr/share/libdrm:
+    bind: $SNAP/gpu-2404/libdrm
+  /usr/share/drirc.d:
+    symlink: $SNAP/gpu-2404/drirc.d
+  /usr/share/X11/XErrorDB:
+    symlink: $SNAP/gpu-2404/X11/XErrorDB
 
 apps:
     opendungeons:
-        command: bin/desktop-launch $SNAP/usr/games/opendungeons
+        command: bin/gpu-2404-wrapper $SNAP/usr/games/opendungeons
         environment:
             CEGUI_MODULE_DIR: $SNAP/usr/lib/cegui-0.9999
+            OGRE_PLUGIN_DIR: $SNAP/usr/lib/OGRE/
+            XDG_DATA_DIRS: $SNAP/usr/share:$XDG_DATA_DIRS
+            XDG_DATA_HOME: $SNAP_USER_DATA
+            XDG_CONFIG_HOME: $SNAP_USER_DATA
+            XDG_CACHE_HOME: $SNAP_USER_COMMON/.cache
+            PULSE_SERVER: unix:${XDG_RUNTIME_DIR}/../pulse/native
         plugs: [opengl, x11, pulseaudio, network, network-bind]
         desktop: usr/share/applications/opendungeons.desktop
 parts:
-    desktop-glib-only:
-        source: https://github.com/ubuntu/snapcraft-desktop-helpers.git
-        source-subdir: glib-only
-        plugin: make
     ogre:
         plugin: cmake
         cmake-parameters:
@@ -25,12 +47,17 @@ parts:
             - -DOGRE_BUILD_RENDERSYSTEM_GL=TRUE
             - -DOGRE_BUILD_RENDERSYSTEM_GL3PLUS=TRUE
             - -DOGRE_RESOURCEMANAGER_STRICT=0
+            - -DOGRE_NODELESS_POSITIONING=TRUE
+            - -DOGRE_ENABLE_PRECOMPILED_HEADERS=FALSE
             # stuff we dont need
             - -DOGRE_BUILD_RENDERSYSTEM_GLES2=FALSE
             - -DOGRE_BUILD_TOOLS=FALSE
             - -DOGRE_BUILD_SAMPLES=FALSE
+            - -DOGRE_INSTALL_SAMPLES=FALSE
             - -DOGRE_BUILD_PLUGIN_FREEIMAGE=FALSE
+            - -DOGRE_BUILD_PLUGIN_STBI=TRUE
             - -DOGRE_BUILD_PLUGIN_EXRCODEC=FALSE
+            - -DOGRE_BUILD_PLUGIN_ASSIMP=FALSE
             - -DOGRE_BUILD_PLUGIN_BSP=FALSE
             - -DOGRE_BUILD_PLUGIN_PCZ=FALSE
             - -DOGRE_BUILD_PLUGIN_DOT_SCENE=FALSE
@@ -42,58 +69,72 @@ parts:
             - -DOGRE_BUILD_COMPONENT_MESHLODGENERATOR=FALSE
             - -DCMAKE_INSTALL_PREFIX=/usr/
         source: https://github.com/OGRECave/ogre.git
-        source-tag: v13.6.5
+        source-tag: v14.6.3
         source-depth: 1
         build-packages:
             - libxrandr-dev
-            - libfreetype6-dev
+            - libfreetype-dev
+            - libxt-dev
             - libgl1-mesa-dev
             - libglu1-mesa-dev
             - g++
         stage-packages:
             - libfreetype6
             - libgl1
+            - libglu1-mesa
             - libxrandr2
             - libegl1
+            - libxt6t64
     cegui:
         plugin: cmake
         cmake-parameters:
             - -DCMAKE_BUILD_TYPE=Release
             - -DCMAKE_INSTALL_PREFIX=/usr/
-            - -DCMAKE_CXX_FLAGS=-std=c++11
+            - -DCEGUI_LIB_INSTALL_DIR=lib
+            - -DCMAKE_CXX_STANDARD=14
+            - -DCEGUI_BUILD_RENDERER_OGRE=TRUE
             - -DCEGUI_BUILD_RENDERER_OPENGL=FALSE
             - -DCEGUI_BUILD_RENDERER_OPENGLES=FALSE
             - -DCEGUI_BUILD_RENDERER_OPENGL3=FALSE
             - -DCEGUI_BUILD_IMAGECODEC_FREEIMAGE=FALSE # we use ogre
             - -DCEGUI_OPTION_DEFAULT_IMAGECODEC=OgreRenderer-0
+            - -DCEGUI_BUILD_XMLPARSER_RAPIDXML=TRUE
+            - -DCEGUI_BUILD_XMLPARSER_EXPAT=FALSE
+            - -DCEGUI_BUILD_XMLPARSER_LIBXML2=FALSE
+            - -DCEGUI_BUILD_XMLPARSER_TINYXML=FALSE
+            - -DCEGUI_BUILD_XMLPARSER_XERCES=FALSE
             - -DCEGUI_SAMPLES_ENABLED=FALSE
+            - -DCEGUI_BUILD_APPLICATION_TEMPLATES=FALSE
         build-environment:
-            - CMAKE_PREFIX_PATH: $CMAKE_PREFIX_PATH:$SNAPCRAFT_STAGE/usr
+            - CMAKE_PREFIX_PATH: $CRAFT_STAGE/usr
         source: https://github.com/paroj/cegui.git
+        source-branch: v0
         source-depth: 1
-        source-tag: v0
+        override-pull: |
+            craftctl default
+            # The branch still pins C++11 when Ogre is newer than 1.11;
+            # Ogre 14 requires C++14 for its public headers.
+            sed -i 's/set(CMAKE_CXX_STANDARD 11)/set(CMAKE_CXX_STANDARD 14)/g' CMakeLists.txt
         build-packages:
             - librapidxml-dev
+            - libfreetype-dev
         after: [ogre]
     opendungeons:
         plugin: cmake
         source: https://github.com/paroj/OpenDungeons.git
-        source-tag: snapcraft
+        source-branch: snapcraft
         source-depth: 1
-        override-pull: |
-            snapcraftctl pull
-            sed -i -e 's|if(CMAKE_INSTALL_PREFIX|if(""|g' CMakeLists.txt
         cmake-parameters:
             - -DCMAKE_BUILD_TYPE=Release
             - -DCMAKE_INSTALL_PREFIX=/usr/
-            - -DCMAKE_CXX_FLAGS=-std=c++11
             - -DOD_TREAT_WARNINGS_AS_ERRORS=FALSE
         build-environment:
-            - CMAKE_PREFIX_PATH: $CMAKE_PREFIX_PATH:$SNAPCRAFT_STAGE/usr
+            - CMAKE_PREFIX_PATH: $CRAFT_STAGE/usr
         override-build: |
-            snapcraftctl build
-            sed -i -e 's|/.*/stage||g' $SNAPCRAFT_PART_INSTALL/etc/opendungeons/plugins.cfg # drop stage prefix
-            sed -i -e 's|/.*/stage||g' $SNAPCRAFT_PART_INSTALL/usr/share/games/opendungeons/resources.cfg # drop stage prefix
+            craftctl default
+            sed -i -e 's|/.*/stage||g' $CRAFT_PART_INSTALL/etc/opendungeons/plugins.cfg # drop stage prefix
+            sed -i -e 's|/.*/stage||g' $CRAFT_PART_INSTALL/usr/share/games/opendungeons/resources.cfg # drop stage prefix
+            sed -i -e 's|Icon=.*|Icon=${SNAP}/usr/share/icons/hicolor/scalable/apps/opendungeons.svg|' $CRAFT_PART_INSTALL/usr/share/applications/opendungeons.desktop
         build-packages:
             - libsfml-dev
             - libois-dev
@@ -101,17 +142,33 @@ parts:
             - libboost-locale-dev
             - libboost-filesystem-dev
             - libboost-program-options-dev
+            - libboost-system-dev
         stage-packages:
-            - libsfml-window2.5
-            - libsfml-audio2.5
-            - libsfml-system2.5
-            - libsfml-network2.5
-            - libboost-thread1.71.0
-            - libboost-program-options1.71.0
-            - libboost-filesystem1.71.0
-            - libboost-system1.71.0
-            - libboost-locale1.71.0
-            - libboost-chrono1.71.0
-            - libois-1.3.0v5
+            - libsfml-window2.6
+            - libsfml-audio2.6
+            - libsfml-system2.6
+            - libsfml-network2.6
+            - libboost-thread1.83.0
+            - libboost-program-options1.83.0
+            - libboost-filesystem1.83.0
+            - libboost-system1.83.0
+            - libboost-locale1.83.0
+            - libboost-chrono1.83.0
             - libpulse0
-        after: [ogre, cegui, desktop-glib-only]
+        # libpulse.so.0 has a hardcoded RUNPATH of /usr/lib/<triplet>/pulseaudio,
+        # which does not exist inside a strict snap, and libpulsecommon lives
+        # only in that directory. $SNAP/usr/lib is on the default
+        # LD_LIBRARY_PATH, so move it there instead of hardcoding an arch path.
+        organize:
+            "usr/lib/*/pulseaudio/libpulsecommon-*": usr/lib/
+        after: [ogre, cegui]
+    gpu-2404:
+        after: [opendungeons]
+        source: https://github.com/canonical/gpu-snap.git
+        source-commit: 84e56217ec137c3f8d7a0e773bb7c39c8fc40f28
+        plugin: dump
+        override-prime: |
+          craftctl default
+          ${CRAFT_PART_SRC}/bin/gpu-2404-cleanup mesa-2404
+        prime:
+          - bin/gpu-2404-wrapper
