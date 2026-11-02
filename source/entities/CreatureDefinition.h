@@ -32,7 +32,7 @@ class ODPacket;
 enum class RoomType;
 
 //! \brief The maximum level of a creature
-static const uint32_t MAX_LEVEL = 30;
+static const uint32_t MAX_LEVEL = 10;
 
 class CreatureRoomAffinity
 {
