@@ -75,6 +75,17 @@ public:
         Fighter,    // Sleep, eat, train and fight any enemy thing.
     };
 
+    //! \brief Preferred combat role. It drives which enemies the creature
+    //! tries to engage first.
+    enum CombatClass
+    {
+        Blocker = 1, // Holds the line and intercepts attackers
+        Blitzer,     // Breaks through to reach support creatures
+        Flanker,     // Tries to hit support creatures from the side
+        Support,     // Stays back and fights at range
+        NonFighter,  // Avoids real fights
+    };
+
     CreatureDefinition(
             const std::string&      className   = std::string(),
             CreatureJob             job         = Fighter,
@@ -126,6 +137,9 @@ public:
 
     static CreatureJob creatureJobFromString(const std::string& s);
     static std::string creatureJobToString(CreatureJob c);
+
+    static CombatClass combatClassFromString(const std::string& s);
+    static std::string combatClassToString(CombatClass c);
     //! \brief Writes the differences between def1 and def2 in the given file. Note that def1 can be null. In
     //! this case, every parameters in def2 will be written. def2 cannot be null.
     static void writeCreatureDefinitionDiff(
@@ -143,7 +157,12 @@ public:
     static bool update(CreatureDefinition* creatureDef, std::stringstream& defFile, const std::map<std::string, CreatureDefinition*>& defMap);
 
     inline CreatureJob          getCreatureJob  () const    { return mCreatureJob; }
+    inline CombatClass          getCombatClass  () const    { return mCombatClass; }
     inline const std::string&   getClassName    () const    { return mClassName; }
+
+    //! \brief Lower is more preferred. Returns the target priority for this
+    //! creature's combat class when facing the given target class.
+    int getCombatClassTargetPriority(CombatClass target) const;
 
     inline const std::string&   getMeshName     () const    { return mMeshName; }
 
@@ -231,6 +250,9 @@ public:
 private:
     //! \brief The job of the creature (e.g. worker, fighter, ...)
     CreatureJob mCreatureJob;
+
+    //! \brief The preferred combat role of the creature
+    CombatClass mCombatClass;
 
     //! \brief The name of the creatures class
     std::string mClassName;

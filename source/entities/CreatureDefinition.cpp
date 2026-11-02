@@ -71,6 +71,7 @@ CreatureDefinition::CreatureDefinition(
             int32_t                 sleepHeal,
             int32_t                 turnsStunDropped) :
         mCreatureJob (job),
+        mCombatClass (Blocker),
         mClassName   (className),
         mMeshName    (meshName),
         mBedMeshName (bedMeshName),
@@ -121,6 +122,7 @@ CreatureDefinition::CreatureDefinition(
 
 CreatureDefinition::CreatureDefinition(const CreatureDefinition& def) :
         mCreatureJob(def.mCreatureJob),
+        mCombatClass(def.mCombatClass),
         mClassName(def.mClassName),
         mMeshName(def.mMeshName),
         mBedMeshName(def.mBedMeshName),
@@ -261,6 +263,99 @@ std::string CreatureDefinition::creatureJobToString(CreatureJob c)
     }
 }
 
+CreatureDefinition::CombatClass CreatureDefinition::combatClassFromString(const std::string& s)
+{
+    if (s.compare("Blitzer") == 0)
+        return Blitzer;
+    if (s.compare("Flanker") == 0)
+        return Flanker;
+    if (s.compare("Support") == 0)
+        return Support;
+    if (s.compare("NonFighter") == 0)
+        return NonFighter;
+
+    // Use Blocker as a default value
+    return Blocker;
+}
+
+std::string CreatureDefinition::combatClassToString(CombatClass c)
+{
+    switch (c)
+    {
+    case Blitzer:
+        return "Blitzer";
+
+    case Flanker:
+        return "Flanker";
+
+    case Support:
+        return "Support";
+
+    case NonFighter:
+        return "NonFighter";
+
+    default:
+    case Blocker:
+        return "Blocker";
+    }
+}
+
+int CreatureDefinition::getCombatClassTargetPriority(CombatClass target) const
+{
+    switch (mCombatClass)
+    {
+    case Blitzer:
+        switch (target)
+        {
+        case Support:    return 0;
+        case Flanker:    return 1;
+        case Blocker:    return 2;
+        case NonFighter: return 3;
+        default:         return 4;
+        }
+
+    case Flanker:
+        switch (target)
+        {
+        case Support:    return 0;
+        case Blocker:    return 1;
+        case Flanker:    return 2;
+        case NonFighter: return 3;
+        default:         return 4;
+        }
+
+    case Blocker:
+        switch (target)
+        {
+        case Blitzer:    return 0;
+        case Flanker:    return 1;
+        case Support:    return 2;
+        case Blocker:    return 3;
+        case NonFighter: return 4;
+        default:         return 5;
+        }
+
+    case Support:
+        switch (target)
+        {
+        case Support:    return 0;
+        case Flanker:    return 1;
+        case Blitzer:    return 2;
+        case Blocker:    return 3;
+        case NonFighter: return 4;
+        default:         return 5;
+        }
+
+    default:
+    case NonFighter:
+        switch (target)
+        {
+        case NonFighter: return 0;
+        default:         return 1;
+        }
+    }
+}
+
 int32_t CreatureDefinition::getFee(unsigned int level) const
 {
     return mFeeBase + (mFeePerLevel * level);
@@ -269,8 +364,10 @@ int32_t CreatureDefinition::getFee(unsigned int level) const
 ODPacket& operator<<(ODPacket& os, const CreatureDefinition* c)
 {
     std::string creatureJob = CreatureDefinition::creatureJobToString(c->mCreatureJob);
+    std::string combatClass = CreatureDefinition::combatClassToString(c->mCombatClass);
     os << c->mClassName
        << creatureJob
+       << combatClass
        << c->mMeshName;
     os << c->mBedMeshName << c->mBedDim1 << c->mBedDim2 << c->mBedPosX << c->mBedPosY << c->mBedOrientX << c->mBedOrientY;
     os << c->mMinHP;
@@ -312,6 +409,8 @@ ODPacket& operator>>(ODPacket& is, CreatureDefinition* c)
     std::string tempString;
     is >> c->mClassName >> tempString;
     c->mCreatureJob = CreatureDefinition::creatureJobFromString(tempString);
+    is >> tempString;
+    c->mCombatClass = CreatureDefinition::combatClassFromString(tempString);
     is >> c->mMeshName;
     is >> c->mBedMeshName >> c->mBedDim1 >> c->mBedDim2 >>c->mBedPosX >> c->mBedPosY >> c->mBedOrientX >> c->mBedOrientY;
     is >> c->mMinHP >> c->mHpPerLevel >> c->mHpHealPerTurn;
@@ -462,6 +561,12 @@ bool CreatureDefinition::update(CreatureDefinition* creatureDef, std::stringstre
             {
                 defFile >> nextParam;
                 creatureDef->mCreatureJob = CreatureDefinition::creatureJobFromString(nextParam);
+                continue;
+            }
+            else if (nextParam == "CombatClass")
+            {
+                defFile >> nextParam;
+                creatureDef->mCombatClass = CreatureDefinition::combatClassFromString(nextParam);
                 continue;
             }
             else if (nextParam == "MeshName")
@@ -742,6 +847,9 @@ void CreatureDefinition::writeCreatureDefinitionDiff(
 
     if(def1 == nullptr || (def1->mCreatureJob != def2->mCreatureJob))
         file << "    CreatureJob\t" << creatureJobToString(def2->mCreatureJob) << std::endl;
+
+    if(def1 == nullptr || (def1->mCombatClass != def2->mCombatClass))
+        file << "    CombatClass\t" << combatClassToString(def2->mCombatClass) << std::endl;
 
     if(def1 == nullptr || (def1->mMeshName.compare(def2->mMeshName) != 0))
         file << "    MeshName\t" << def2->mMeshName << std::endl;
