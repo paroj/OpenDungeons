@@ -1,5 +1,7 @@
 #ifdef OD_USE_SFML_WINDOW
 #include <SFML/Window/Keyboard.hpp>
+#else
+#include <OgreInput.h>
 #endif
 
 #include "Keyboard.h"
@@ -22,6 +24,18 @@ bool Keyboard::isModifierDown(OIS::Keyboard::Modifier code)
 
     return false;
 #else
-    return mKeyboard->isModifierDown(code);
+    switch(code)
+    {
+        case OIS::Keyboard::Alt:
+            return (mModifiers & OgreBites::KMOD_ALT) != 0;
+        case OIS::Keyboard::Ctrl:
+            return (mModifiers & OgreBites::KMOD_CTRL) != 0;
+        case OIS::Keyboard::Shift:
+            return (mModifiers & OgreBites::KMOD_SHIFT) != 0;
+        default:
+            break;
+    }
+
+    return false;
 #endif
 }

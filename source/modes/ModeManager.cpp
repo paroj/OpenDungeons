@@ -155,11 +155,5 @@ void ModeManager::update(const Ogre::FrameEvent& evt)
     // We update the current mode
     AbstractApplicationMode* currentMode = getCurrentMode();
 
-#ifndef OD_USE_SFML_WINDOW
-    mInputManager.mMouse->capture();
-    mInputManager.mKeyboard->getKeyboard()->capture();
-#endif
-    //currentMode->mouseMoved(OIS::MouseEvent(nullptr, currentMode->getMouse()->getMouseState()));
-
     currentMode->onFrameStarted(evt);
 }

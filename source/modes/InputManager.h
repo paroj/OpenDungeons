@@ -19,17 +19,12 @@
 #define INPUTMANAGER_H
 
 #include <OgreVector3.h>
+#include <OISMouse.h>
+#include <OgreInput.h>
 
 #include <memory>
 
 #include "modes/Keyboard.h"
-
-namespace OIS
-{
-    class InputManager;
-    class Keyboard;
-    class Mouse;
-}
 
 namespace Ogre
 {
@@ -51,7 +46,7 @@ enum class InputCommandState
     validated // When the player is happy with the build and wants to build
 };
 
-class InputManager
+class InputManager : public OgreBites::InputListener
 {
 public:
     InputManager(Ogre::RenderWindow* renderWindow);
@@ -61,8 +56,13 @@ public:
     void setCurrentAMode(AbstractApplicationMode& mode);
     void handleSFMLEvent(const sf::Event& evt);
 
-    OIS::InputManager*  mInputManager;
-
+    bool mouseMoved(const OgreBites::MouseMotionEvent& evt) override;
+    bool mouseWheelRolled(const OgreBites::MouseWheelEvent& evt) override;
+    bool mousePressed(const OgreBites::MouseButtonEvent& evt) override;
+    bool mouseReleased(const OgreBites::MouseButtonEvent& evt) override;
+    bool keyPressed(const OgreBites::KeyboardEvent& evt) override;
+    bool keyReleased(const OgreBites::KeyboardEvent& evt) override;
+    bool textInput(const OgreBites::TextInputEvent& evt) override;
 
     bool                mHotkeyLocationIsValid[10];
     Ogre::Vector3       mHotkeyLocation[10];
@@ -80,9 +80,9 @@ public:
     //! \brief In editor mode, it contains the selected seat Id. In gamemode, it is not used
     int                 mSeatIdSelected;
     InputCommandState   mCommandState;
-    OIS::Mouse*         mMouse;
 
     private:
+    OIS::MouseState     mMouseState;
     AbstractApplicationMode* mCurrentAMode;
 #ifdef OD_USE_SFML_WINDOW
     std::unique_ptr<SFMLToOISListener> mListener;

@@ -21,6 +21,7 @@
 
 #include "ODApplication.h"
 
+#include "modes/ModeManager.h"
 #include "network/ODServer.h"
 #include "network/ODClient.h"
 #include "network/ServerMode.h"
@@ -38,6 +39,7 @@
 #include "utils/Random.h"
 #include "utils/ResourceManager.h"
 
+#include <OgreApplicationContext.h>
 #include <OgreRenderWindow.h>
 #include <OgreRoot.h>
 #include <Overlay/OgreOverlaySystem.h>
@@ -48,8 +50,6 @@
 #endif
 
 #ifdef OD_USE_SFML_WINDOW
-#include "modes/ModeManager.h"
-
 #include <SFML/Window.hpp>
 #include <SFML/OpenGL.hpp>
 #include <SFML/Graphics.hpp>
@@ -61,9 +61,68 @@
 
 #include <boost/program_options.hpp>
 
+#include <memory>
 #include <string>
 #include <sstream>
 #include <fstream>
+
+#ifndef OD_USE_SFML_WINDOW
+namespace
+{
+//! \brief ApplicationContext subclass that creates the game window.
+class ODApplicationContext : public OgreBites::ApplicationContext
+{
+public:
+    ODApplicationContext() : OgreBites::ApplicationContext("OpenDungeons"), mWindowListener(nullptr)
+    {
+    }
+
+    void setWindowListener(ODFrameListener* listener)
+    {
+        mWindowListener = listener;
+    }
+
+    void windowResized(Ogre::RenderWindow* window) override
+    {
+        if(mWindowListener != nullptr)
+            mWindowListener->windowResized(window);
+    }
+
+protected:
+    void createRoot() override
+    {
+        mRoot = new Ogre::Root(ResourceManager::getSingleton().getPluginsPath(), "", "");
+        mOverlaySystem = new Ogre::OverlaySystem();
+    }
+
+    bool oneTimeConfig() override
+    {
+        return ConfigManager::getSingleton().initVideoConfig(*mRoot);
+    }
+
+    void setup() override
+    {
+        mRoot->initialise(false);
+        createWindow("OpenDungeons " + ODApplication::VERSION);
+    }
+
+private:
+    ODFrameListener* mWindowListener;
+};
+
+struct ApplicationContextDeleter
+{
+    void operator()(ODApplicationContext* context) const
+    {
+        if(context != nullptr)
+        {
+            context->closeApp();
+            delete context;
+        }
+    }
+};
+} // namespace
+#endif
 
 void ODApplication::startGame(boost::program_options::variables_map& options)
 {
@@ -124,24 +183,29 @@ void ODApplication::startClient()
     Random::initialize();
     //NOTE: The order of initialisation of the different "manager" classes is important,
     //as many of them depend on each other.
-    OD_LOG_INF("Creating OGRE::Root instance; Plugins path: " + resMgr.getPluginsPath());
-
-    // N.B: We don't use any ogre.cfg file, hence setting the file path value to "".
-    Ogre::Root ogreRoot(resMgr.getPluginsPath(), "");
+    OD_LOG_INF("Initializing Ogre; Plugins path: " + resMgr.getPluginsPath());
 
     ConfigManager configManager(resMgr.getConfigPath(), resMgr.getUserCfgFile(),
         resMgr.getSoundPath());
 
-    if (!configManager.initVideoConfig(ogreRoot))
+    Ogre::Root* ogreRoot = nullptr;
+    Ogre::RenderWindow* renderWindow = nullptr;
+    Ogre::OverlaySystem* overlaySystem = nullptr;
+
+#ifdef OD_USE_SFML_WINDOW
+    Ogre::Root sfmlRoot(resMgr.getPluginsPath(), "");
+
+    ogreRoot = &sfmlRoot;
+    if (!configManager.initVideoConfig(*ogreRoot))
         return;
 
     // Needed for the TextRenderer and the Render Manager
-    Ogre::OverlaySystem overlaySystem;
+    Ogre::OverlaySystem sfmlOverlaySystem;
+    overlaySystem = &sfmlOverlaySystem;
 
     const std::string windowTitle = "OpenDungeons " + VERSION;
 
     OD_LOG_INF("Creating window...");
-#ifdef OD_USE_SFML_WINDOW
     const unsigned int MIN_WIDTH = 300;
     const unsigned int MIN_HEIGHT = 200;
 
@@ -169,31 +233,38 @@ void ODApplication::startClient()
     sf::RenderWindow sfmlWindow(sf::VideoMode(w, h, sf::VideoMode::getDesktopMode().bitsPerPixel)
                                 , windowTitle, style, sf::ContextSettings(32, 0, 2, 1));
 
-    ogreRoot.initialise(false);
+    ogreRoot->initialise(false);
 
-    Ogre::RenderWindow* renderWindow = [&](){
-		Ogre::NameValuePairList misc;
+    renderWindow = [&](){
+        Ogre::NameValuePairList misc;
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
-		auto winHandle = reinterpret_cast<size_t>(sfmlWindow.getSystemHandle());
-		auto winGlContext = reinterpret_cast<size_t>(wglGetCurrentContext());
-		misc["externalWindowHandle"] = Helper::toString(winHandle);
-		misc["externalGLContext"] = Helper::toString(winGlContext);
-		misc["externalGLControl"] = Ogre::String("True");
+        auto winHandle = reinterpret_cast<size_t>(sfmlWindow.getSystemHandle());
+        auto winGlContext = reinterpret_cast<size_t>(wglGetCurrentContext());
+        misc["externalWindowHandle"] = Helper::toString(winHandle);
+        misc["externalGLContext"] = Helper::toString(winGlContext);
+        misc["externalGLControl"] = Ogre::String("True");
 #else
         misc["currentGLContext"] = Ogre::String("true");
 #endif
-        return ogreRoot.createRenderWindow(windowTitle, w, h, style == sf::Style::Fullscreen, &misc);
+        return ogreRoot->createRenderWindow(windowTitle, w, h, style == sf::Style::Fullscreen, &misc);
     }();
     renderWindow->setVisible(true);
-#else /* OD_USE_SFML_WINDOW */
-    Ogre::RenderWindow* renderWindow = ogreRoot.initialise(true, "OpenDungeons " + VERSION);
-    OgreBites::WindowEventUtilities::_addRenderWindow(renderWindow);
+#else
+    // ApplicationContext creates the Ogre root and the main window.
+    std::unique_ptr<ODApplicationContext, ApplicationContextDeleter> appContext(new ODApplicationContext());
+    appContext->initApp();
+
+    ogreRoot = appContext->getRoot();
+    renderWindow = appContext->getRenderWindow();
+    overlaySystem = appContext->getOverlaySystem();
+    if ((ogreRoot == nullptr) || (renderWindow == nullptr) || (overlaySystem == nullptr))
+        return;
 #endif /* OD_USE_SFML_WINDOW */
 
 
     //NOTE: This is currently done here as it has to be done after initialising mRoot,
     // but before running initialiseAllResourceGroups()
-    resMgr.setupOgreResources(ogreRoot.getRenderSystem()->getNativeShadingLanguageVersion());
+    resMgr.setupOgreResources(ogreRoot->getRenderSystem()->getNativeShadingLanguageVersion());
 
     // Setup Icon (On Windows)
     // NOTE: On linux at least, the icon is usually handled through desktop files.
@@ -230,7 +301,7 @@ void ODApplication::startClient()
     ODServer server;
     ODClient client;
 
-    RenderManager renderManager(&overlaySystem);
+    RenderManager renderManager(overlaySystem);
 
     Ogre::MaterialManager::getSingleton().setActiveScheme(Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
     Gui gui(&soundEffectsManager, resMgr.getCeguiLogFile(), *renderWindow);
@@ -241,9 +312,17 @@ void ODApplication::startClient()
                                 0, 0, 200, 50, Ogre::ColourValue::White);
 
     ODFrameListener frameListener(resMgr.getConfigPath() + "mainmenuscene.cfg",
-        renderWindow, &overlaySystem, &gui);
+        renderWindow, overlaySystem, &gui);
 
-    ogreRoot.addFrameListener(&frameListener);
+    ogreRoot->addFrameListener(&frameListener);
+
+#ifndef OD_USE_SFML_WINDOW
+    // Input, window resize notifications and event pumping all go through the
+    // ApplicationContext.
+    appContext->setWindowListener(&frameListener);
+    appContext->addInputListener(&frameListener.getModeManager()->getInputManager());
+    ogreRoot->addFrameListener(appContext.get());
+#endif
 
 #ifdef OD_USE_SFML_WINDOW
     bool running = true;
@@ -268,22 +347,28 @@ void ODApplication::startClient()
         }
         sfmlWindow.clear();
         // If renderOneFrame returns false, it indicates that an exit has been requested
-        running = ogreRoot.renderOneFrame();
+        running = ogreRoot->renderOneFrame();
         sfmlWindow.display();
     }
 #else /* OD_USE_SFML_WINDOW */
-    ogreRoot.startRendering();
+    ogreRoot->startRendering();
 #endif /* OD_USE_SFML_WINDOW */
 
     OD_LOG_INF("Disconnecting client...");
     client.disconnect();
     OD_LOG_INF("Stopping server...");
     server.stopServer();
-    ogreRoot.removeFrameListener(&frameListener);
+#ifndef OD_USE_SFML_WINDOW
+    appContext->removeInputListener(&frameListener.getModeManager()->getInputManager());
+    ogreRoot->removeFrameListener(appContext.get());
+#endif
+    ogreRoot->removeFrameListener(&frameListener);
     Ogre::MaterialManager::getSingleton().removeListener(sgListener);
     delete sgListener;
     Ogre::RTShader::ShaderGenerator::destroy();
-    ogreRoot.destroyRenderTarget(renderWindow);
+#ifdef OD_USE_SFML_WINDOW
+    ogreRoot->destroyRenderTarget(renderWindow);
+#endif
 }
 
 //TODO: find some better places for some of these
