@@ -118,8 +118,11 @@ public:
     bool quit(const CEGUI::EventArgs &e);
 
     //! \brief This permits to get the keeperHand world coordinates from the cursor position
+    //! keeperHand3DPos is the point under the cursor on the hand plane (TILE_HIGH_WORLD_Z),
+    //! keeperHand3DGround is the point on the ground plane. The latter is the authoritative
+    //! position for tile selection and entity picking.
     //! returns true if the keeper hand position was successfully computed and false otherwise.
-    //! If it returns false, keeperHand3DPos will stay unchanged
+    //! If it returns false, the positions will stay unchanged
     bool findWorldPositionFromMouse(Ogre::Vector3& keeperHand3DPos, Ogre::Vector3& keeperHand3DGround);
 
     /*! \brief Print a string in the upper right corner of the screen.
