@@ -214,9 +214,6 @@ bool EditorMode::mouseMoved(const OIS::MouseEvent &arg)
     textRenderer.moveText(ODApplication::POINTER_INFO_STRING,
         static_cast<Ogre::Real>(arg.state.X.abs + 30), static_cast<Ogre::Real>(arg.state.Y.abs));
 
-    // We notify current selection input
-    checkInputCommand();
-
     handleMouseWheel(arg);
 
     // Since this is a tile selection query we loop over the result set
@@ -276,6 +273,10 @@ bool EditorMode::mouseMoved(const OIS::MouseEvent &arg)
         mMouseY = inputManager.mYPos;
         updateCursorText();
     }
+
+    // We notify current selection input once the cursor position is up to date so that
+    // the tile preview matches the tile that would be clicked.
+    checkInputCommand();
 
     return true;
 }
