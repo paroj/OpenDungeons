@@ -397,7 +397,7 @@ bool GameMode::mouseMoved(const OIS::MouseEvent &arg)
     // Since this is a tile selection query we loop over the result set
     // and look for the first object which is actually a tile.
     ODFrameListener::getSingleton().findWorldPositionFromMouse(inputManager.mKeeperHandPos, inputManager.mKeeperHandGroundPos);
-    RenderManager::getSingleton().moveWorldCoords(inputManager.mKeeperHandPos.x, inputManager.mKeeperHandPos.y);
+    RenderManager::getSingleton().moveWorldCoords(inputManager.mKeeperHandGroundPos.x, inputManager.mKeeperHandGroundPos.y);
 
     int tileX = Helper::round(inputManager.mKeeperHandGroundPos.x);
     int tileY = Helper::round(inputManager.mKeeperHandGroundPos.y);
@@ -419,7 +419,7 @@ bool GameMode::mouseMoved(const OIS::MouseEvent &arg)
         }
 
         const Ogre::Vector3& entityPos = entity->getPosition();
-        double dist = Pathfinding::squaredDistance(entityPos.x, inputManager.mKeeperHandPos.x, entityPos.y, inputManager.mKeeperHandPos.y);
+        double dist = Pathfinding::squaredDistance(entityPos.x, inputManager.mKeeperHandGroundPos.x, entityPos.y, inputManager.mKeeperHandGroundPos.y);
         if(closestCreature == nullptr)
         {
             closestDist = dist;
@@ -437,8 +437,8 @@ bool GameMode::mouseMoved(const OIS::MouseEvent &arg)
     if(closestCreature != nullptr)
         RenderManager::getSingleton().rrTemporaryDisplayCreaturesTextOverlay(closestCreature, 0.5f);
 
-    inputManager.mXPos = Helper::round(inputManager.mKeeperHandPos.x);
-    inputManager.mYPos = Helper::round(inputManager.mKeeperHandPos.y);
+    inputManager.mXPos = Helper::round(inputManager.mKeeperHandGroundPos.x);
+    inputManager.mYPos = Helper::round(inputManager.mKeeperHandGroundPos.y);
     if (!inputManager.mLMouseDown)
     {
         inputManager.mLStartDragX = inputManager.mXPos;
@@ -559,15 +559,15 @@ bool GameMode::mousePressed(const OIS::MouseEvent& arg, OIS::MouseButtonID id)
     if(!ODFrameListener::getSingleton().findWorldPositionFromMouse(inputManager.mKeeperHandPos,  inputManager.mKeeperHandGroundPos ))
         return true;
 
-    RenderManager::getSingleton().moveWorldCoords(inputManager.mKeeperHandPos.x, inputManager.mKeeperHandPos.y);
+    RenderManager::getSingleton().moveWorldCoords(inputManager.mKeeperHandGroundPos.x, inputManager.mKeeperHandGroundPos.y);
 
     // The player should be able to move the mouse even if not clicking on a tile. Because of that, we set
     // mMMouseDown before checking which tile is clicked
     if (id == OIS::MB_Middle)
         inputManager.mMMouseDown = true;
 
-    int tileX = Helper::round(inputManager.mKeeperHandPos.x);
-    int tileY = Helper::round(inputManager.mKeeperHandPos.y);
+    int tileX = Helper::round(inputManager.mKeeperHandGroundPos.x);
+    int tileY = Helper::round(inputManager.mKeeperHandGroundPos.y);
     Tile* tileClicked = mGameMap->getTile(tileX, tileY);
     if(tileClicked == nullptr)
         return true;
@@ -586,7 +586,7 @@ bool GameMode::mousePressed(const OIS::MouseEvent& arg, OIS::MouseButtonID id)
                 continue;
 
             const Ogre::Vector3& entityPos = entity->getPosition();
-            double dist = Pathfinding::squaredDistance(entityPos.x, inputManager.mKeeperHandPos.x, entityPos.y, inputManager.mKeeperHandPos.y);
+            double dist = Pathfinding::squaredDistance(entityPos.x, inputManager.mKeeperHandGroundPos.x, entityPos.y, inputManager.mKeeperHandGroundPos.y);
             if(closestEntity == nullptr)
             {
                 closestDist = dist;
@@ -628,7 +628,7 @@ bool GameMode::mousePressed(const OIS::MouseEvent& arg, OIS::MouseButtonID id)
         if(mGameMap->getLocalPlayer()->numObjectsInHand() > 0)
         {
             // If we right clicked with the mouse over a valid map tile, try to drop what we have in hand on the map.
-            Tile *curTile = mGameMap->getTile(inputManager.mKeeperHandGroundPos.x, inputManager.mKeeperHandGroundPos.y);
+            Tile *curTile = tileClicked;
 
             if (curTile == nullptr)
                 return true;
@@ -739,8 +739,8 @@ bool GameMode::mousePressed(const OIS::MouseEvent& arg, OIS::MouseButtonID id)
         mPlayerSelection.setCurrentAction(SelectedAction::selectTile);
 
 
-    inputManager.mLStartDragX = Helper::round(inputManager.mKeeperHandPos.x);
-    inputManager.mLStartDragY = Helper::round(inputManager.mKeeperHandPos.y);
+    inputManager.mLStartDragX = tileClicked->getX();
+    inputManager.mLStartDragY = tileClicked->getY();
     inputManager.mXPos = inputManager.mLStartDragX ;
     inputManager.mYPos = inputManager.mLStartDragY ;
     

@@ -118,7 +118,7 @@ void SpellCreatureHaste::checkSpellCast(GameMap* gameMap, const InputManager& in
         }
 
         const Ogre::Vector3& entityPos = entity->getPosition();
-        double dist = Pathfinding::squaredDistance(entityPos.x, inputManager.mKeeperHandPos.x, entityPos.y, inputManager.mKeeperHandPos.y);
+        double dist = Pathfinding::squaredDistance(entityPos.x, inputManager.mKeeperHandGroundPos.x, entityPos.y, inputManager.mKeeperHandGroundPos.y);
         if(closestCreature == nullptr)
         {
             closestDist = dist;

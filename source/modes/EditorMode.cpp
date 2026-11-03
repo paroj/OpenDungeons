@@ -223,10 +223,10 @@ bool EditorMode::mouseMoved(const OIS::MouseEvent &arg)
     if(!ODFrameListener::getSingleton().findWorldPositionFromMouse(keeperHandPos, keeperHandGround))
         return true;
 
-    RenderManager::getSingleton().moveWorldCoords(keeperHandPos.x, keeperHandPos.y);
+    RenderManager::getSingleton().moveWorldCoords(keeperHandGround.x, keeperHandGround.y);
 
-    int tileX = Helper::round(keeperHandPos.x);
-    int tileY = Helper::round(keeperHandPos.y);
+    int tileX = Helper::round(keeperHandGround.x);
+    int tileY = Helper::round(keeperHandGround.y);
     Tile* tileClicked = mGameMap->getTile(tileX, tileY);
     if(tileClicked == nullptr)
         return true;
@@ -245,7 +245,7 @@ bool EditorMode::mouseMoved(const OIS::MouseEvent &arg)
         }
 
         const Ogre::Vector3& entityPos = entity->getPosition();
-        double dist = Pathfinding::squaredDistance(entityPos.x, keeperHandPos.x, entityPos.y, keeperHandPos.y);
+        double dist = Pathfinding::squaredDistance(entityPos.x, keeperHandGround.x, entityPos.y, keeperHandGround.y);
         if(closestCreature == nullptr)
         {
             closestDist = dist;
@@ -359,10 +359,10 @@ bool EditorMode::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButtonID id)
     if(!ODFrameListener::getSingleton().findWorldPositionFromMouse(keeperHandPos, keeperGroundPos))
         return true;
 
-    RenderManager::getSingleton().moveWorldCoords(keeperHandPos.x, keeperHandPos.y);
+    RenderManager::getSingleton().moveWorldCoords(keeperGroundPos.x, keeperGroundPos.y);
 
-    int tileX = Helper::round(keeperHandPos.x);
-    int tileY = Helper::round(keeperHandPos.y);
+    int tileX = Helper::round(keeperGroundPos.x);
+    int tileY = Helper::round(keeperGroundPos.y);
     Tile* tileClicked = mGameMap->getTile(tileX, tileY);
     if(tileClicked == nullptr)
         return true;
@@ -381,7 +381,7 @@ bool EditorMode::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButtonID id)
                 continue;
 
             const Ogre::Vector3& entityPos = entity->getPosition();
-            double dist = Pathfinding::squaredDistance(entityPos.x, keeperHandPos.x, entityPos.y, keeperHandPos.y);
+            double dist = Pathfinding::squaredDistance(entityPos.x, keeperGroundPos.x, entityPos.y, keeperGroundPos.y);
             if(closestEntity == nullptr)
             {
                 closestDist = dist;
@@ -424,7 +424,7 @@ bool EditorMode::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButtonID id)
         }
 
         // If we right clicked with the mouse over a valid map tile, try to drop a creature onto the map.
-        Tile* curTile = mGameMap->getTile(inputManager.mXPos, inputManager.mYPos);
+        Tile* curTile = tileClicked;
 
         if (curTile == nullptr)
             return true;
@@ -433,8 +433,6 @@ bool EditorMode::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButtonID id)
         if(mGameMap->getLocalPlayer()->numObjectsInHand() > 0)
         {
             // If we right clicked with the mouse over a valid map tile, try to drop what we have in hand on the map.
-            Tile* curTile = mGameMap->getTile(inputManager.mXPos, inputManager.mYPos);
-
             if (curTile == nullptr)
                 return true;
 
@@ -466,7 +464,7 @@ bool EditorMode::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButtonID id)
                     continue;
 
                 const Ogre::Vector3& entityPos = entity->getPosition();
-                double dist = Pathfinding::squaredDistance(entityPos.x, keeperHandPos.x, entityPos.y, keeperHandPos.y);
+                double dist = Pathfinding::squaredDistance(entityPos.x, keeperGroundPos.x, entityPos.y, keeperGroundPos.y);
                 if(closestEntity == nullptr)
                 {
                     closestDist = dist;
@@ -519,7 +517,7 @@ bool EditorMode::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButtonID id)
             continue;
 
         const Ogre::Vector3& entityPos = entity->getPosition();
-        double dist = Pathfinding::squaredDistance(entityPos.x, keeperHandPos.x, entityPos.y, keeperHandPos.y);
+        double dist = Pathfinding::squaredDistance(entityPos.x, keeperGroundPos.x, entityPos.y, keeperGroundPos.y);
         if(closestEntity == nullptr)
         {
             closestDist = dist;
