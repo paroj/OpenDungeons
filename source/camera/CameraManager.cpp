@@ -468,7 +468,7 @@ void CameraManager::updateCameraFrameTime(const Ogre::Real frameTime)
     if(!ODFrameListener::getSingleton().findWorldPositionFromMouse(keepHandPos, keeperHandGroundPos))
         return;
 
-    RenderManager::getSingleton().moveWorldCoords(keepHandPos.x, keepHandPos.y);
+    RenderManager::getSingleton().moveWorldCoords(keeperHandGroundPos.x, keeperHandGroundPos.y);
 }
 
 Ogre::Vector3 CameraManager::getCameraViewTarget() const
