@@ -392,9 +392,6 @@ bool GameMode::mouseMoved(const OIS::MouseEvent &arg)
     textRenderer.moveText(ODApplication::POINTER_INFO_STRING,
         static_cast<Ogre::Real>(mouseEvent.x + 30), static_cast<Ogre::Real>(mouseEvent.y));
 
-    // We notify current selection input
-    checkInputCommand();
-
     handleMouseWheel(toSFMLMouseWheel(arg));
 
     // Since this is a tile selection query we loop over the result set
@@ -447,6 +444,11 @@ bool GameMode::mouseMoved(const OIS::MouseEvent &arg)
         inputManager.mLStartDragX = inputManager.mXPos;
         inputManager.mLStartDragY = inputManager.mYPos;
     }
+
+    // We notify current selection input once the cursor position is up to date so that
+    // the tile preview matches the tile that would be clicked.
+    checkInputCommand();
+
     return true;
 }
 
