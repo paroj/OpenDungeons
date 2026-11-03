@@ -1533,19 +1533,14 @@ void RenderManager::moveCursor(float relX, float relY)
         mCurrentAspectRatio = cam->getAspectRatio();
         Ogre::Radian angle = cam->getFOVy() * 0.5f;
         Ogre::Real tan = Ogre::Math::Tan(angle);
-        Ogre::Real shortestSize = KEEPER_HAND_POS_Z * tan * 2.0f;
+        Ogre::Real verticalSize = KEEPER_HAND_POS_Z * tan * 2.0f;
         Ogre::Real width = mViewport->getActualWidth();
         Ogre::Real height = mViewport->getActualHeight();
-        if(width > height)
-        {
-            mFactorHeight = shortestSize;
-            mFactorWidth = shortestSize * width / height;
-        }
-        else
-        {
-            mFactorWidth = shortestSize;
-            mFactorHeight = shortestSize * height / width;
-        }
+        // Keep the vertical FOV fixed (as Ogre does with auto aspect ratio) and
+        // derive the horizontal extent from the aspect ratio. This keeps the hand
+        // cursor at a constant on-screen size whatever the window shape is.
+        mFactorHeight = verticalSize;
+        mFactorWidth = verticalSize * width / height;
     }
 
     mHandKeeperNode->setPosition(mFactorWidth * (relX - 0.5f), mFactorHeight * (0.5f - relY), -KEEPER_HAND_POS_Z);
